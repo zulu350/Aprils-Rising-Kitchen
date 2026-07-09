@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Order {
+  id                 String      @id @default(cuid())
+  orderNumber        String      @unique
+  customerName       String
+  email              String
+  phone              String
+  fulfillment        String
+  deliveryCity       String?
+  deliveryAddress    String?
+  preferredDate      String
+  preferredTimeWindow String?
+  notes              String?
+  status             String      @default("new")
+  paymentMethod      String      @default("undecided")
+  paymentStatus      String      @default("unpaid")
+  subtotalCents      Int
+  deliveryFeeCents   Int         @default(0)
+  totalCents         Int
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  items              OrderItem[]
+}
+
+model OrderItem {
+  id             String @id @default(cuid())
+  orderId        String
+  menuItemId     String
+  name           String
+  unitLabel      String
+  unitPriceCents Int
+  quantity       Int
+  lineTotalCents Int
+  order          Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
