@@ -145,3 +145,20 @@ public/images/         # Brand photos + logo
 
 Private / all rights reserved for April's Rising Kitchen unless otherwise agreed.
 # Aprils-Rising-Kitchen
+
+
+## Netlify + Supabase (production)
+
+1. Create a Supabase project → **Settings → Database** → copy the URI into Netlify env as `DATABASE_URL`.
+2. Netlify env vars: `DATABASE_URL`, `ADMIN_PASSWORD`, `SESSION_SECRET`, `PICKUP_ADDRESS`, `NEXT_PUBLIC_SITE_URL`, optional SMTP_*.
+3. Build command (see `netlify.toml`): `prisma generate` → `prisma migrate deploy` → `next build`.
+4. Prisma 7: **do not** put `url` in `schema.prisma`; URLs go in `prisma.config.ts`.
+5. Runtime uses `@prisma/adapter-pg` (see `src/lib/db.ts`). SQLite is not supported on Netlify.
+
+Local: set `DATABASE_URL` in `.env` to the same Supabase DB (or local Postgres), then:
+
+```bash
+npx prisma generate
+npx prisma migrate deploy
+npm run dev
+```

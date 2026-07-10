@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   CATEGORY_LABELS,
   UNIT_LABELS,
-  comingSoonItems,
   formatPrice,
   menuItems,
   type MenuCategory,
@@ -144,28 +143,6 @@ export function MenuClient() {
             </ul>
           </section>
         ))}
-
-        <section aria-labelledby="coming-soon">
-          <h2
-            id="coming-soon"
-            className="mb-2 font-display text-2xl text-espresso"
-          >
-            Coming soon
-          </h2>
-          <p className="mb-4 text-sm text-muted">
-            Not orderable yet — check back later.
-          </p>
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {comingSoonItems.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-xl bg-wheat/80 px-4 py-3 text-sm text-muted ring-1 ring-linen"
-              >
-                {item.name}
-              </li>
-            ))}
-          </ul>
-        </section>
       </div>
 
       {itemCount > 0 ? (

@@ -13,11 +13,6 @@ export type MenuItem = {
   available: boolean;
 };
 
-export type ComingSoonItem = {
-  id: string;
-  name: string;
-};
-
 export const CATEGORY_LABELS: Record<MenuCategory, string> = {
   sourdough: "Sourdough Loaves",
   rolls: "Filipino-Inspired Rolls & Treats",
@@ -104,7 +99,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: "rosemary-olives-sourdough",
-    name: "Rosemary & Olives Sourdough",
+    name: "Rosemary & Olive Oil Sourdough",
     category: "sourdough",
     unitLabel: "loaf",
     priceCents: 1100,
@@ -135,15 +130,6 @@ export const menuItems: MenuItem[] = [
     category: "sourdough",
     unitLabel: "loaf",
     priceCents: 1200,
-    leadTimeHours: 48,
-    available: true,
-  },
-  {
-    id: "gluten-free-sourdough",
-    name: "Gluten-Free Sourdough",
-    category: "sourdough",
-    unitLabel: "loaf",
-    priceCents: 1400,
     leadTimeHours: 48,
     available: true,
   },
@@ -288,15 +274,6 @@ export const menuItems: MenuItem[] = [
     leadTimeHours: 24,
     available: true,
   },
-];
-
-export const comingSoonItems: ComingSoonItem[] = [
-  { id: "cs-everything-bagel-sourdough", name: "Everything Bagel Sourdough" },
-  { id: "cs-sourdough-bagels", name: "Sourdough Bagels" },
-  { id: "cs-cinnamon-rolls", name: "Sourdough Cinnamon Rolls" },
-  { id: "cs-blueberry-scones", name: "Sourdough Blueberry Scones" },
-  { id: "cs-demi-baguette", name: "Demi Baguette" },
-  { id: "cs-english-muffins", name: "Sourdough English Muffins" },
 ];
 
 export function getMenuItem(id: string): MenuItem | undefined {
