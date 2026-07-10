@@ -1,6 +1,11 @@
 [build]
-  command = "npm run build"
+  # Generate client, apply migrations, then build Next.js
+  command = "npx prisma generate && npx prisma migrate deploy && npm run build"
   publish = ".next"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Set these in Netlify UI → Site settings → Environment variables:
+# DATABASE_URL, ADMIN_PASSWORD, SESSION_SECRET, PICKUP_ADDRESS,
+# NEXT_PUBLIC_SITE_URL, and optional SMTP_* / ORDER_NOTIFY_EMAIL

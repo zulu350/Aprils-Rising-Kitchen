@@ -1,21 +1,39 @@
-import path from "node:path";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  pgPool: Pool | undefined;
 };
 
 function createClient() {
-  const url = process.env.DATABASE_URL ?? "file:./data/ark.db";
-  const filePath = url.startsWith("file:")
-    ? path.join(
-        /* turbopackIgnore: true */ process.cwd(),
-        url.slice("file:".length).replace(/^\.\//, ""),
-      )
-    : url;
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error(
+      "DATABASE_URL is not set. Add your Supabase/Postgres connection string.",
+    );
+  }
 
-  const adapter = new PrismaBetterSqlite3({ url: filePath });
+  const pool =
+    globalForPrisma.pgPool ??
+    new Pool({
+      connectionString,
+      // Supabase / many hosts need SSL in production
+      ssl:
+        process.env.DATABASE_SSL === "false"
+          ? undefined
+          : connectionString.includes("localhost")
+            ? undefined
+            : { rejectUnauthorized: false },
+      max: 5,
+    });
+
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.pgPool = pool;
+  }
+
+  const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
 
