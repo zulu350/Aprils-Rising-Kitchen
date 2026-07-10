@@ -51,12 +51,29 @@ function getTransporter() {
   });
 }
 
-function fromAddress(): string {
-  return (
-    process.env.SMTP_FROM?.trim() ||
-    process.env.SMTP_USER ||
+/** Build a clean From: name + address (avoids double angle-brackets). */
+function fromHeader(): { name: string; address: string } {
+  const raw = process.env.SMTP_FROM?.trim();
+  if (raw) {
+    // Full form: Name <email@domain> or just <email@domain>
+    const angled = raw.match(/^(.*?)\s*<([^>]+)>\s*$/);
+    if (angled) {
+      const name = angled[1].replace(/^["']|["']$/g, "").trim();
+      return {
+        name: name || BUSINESS.name,
+        address: angled[2].trim(),
+      };
+    }
+    // Bare email
+    if (raw.includes("@") && !raw.includes(" ")) {
+      return { name: BUSINESS.name, address: raw };
+    }
+  }
+  const address = (
+    process.env.SMTP_USER?.trim() ||
     BUSINESS.email
-  );
+  ).replace(/^<|>$/g, "");
+  return { name: BUSINESS.name, address };
 }
 
 function kitchenNotifyTo(): string {
@@ -67,10 +84,14 @@ function kitchenNotifyTo(): string {
 }
 
 function siteBaseUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    "http://localhost:3000"
-  );
+  // Prefer explicit public URL (custom domain on Netlify).
+  // Set NEXT_PUBLIC_SITE_URL=https://www.aprilsrisingkitchen.com in Netlify env,
+  // then redeploy — used in "View your order" / admin links in emails.
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    process.env.URL?.trim() || // Netlify deploy URL (fallback)
+    "http://localhost:3000";
+  return raw.replace(/\/$/, "");
 }
 
 function itemsListText(order: OrderEmailPayload): string {
@@ -171,11 +192,11 @@ export async function sendNewOrderEmails(
 
   const result = { kitchen: false, customer: false };
   const transporter = getTransporter();
-  const from = fromAddress();
+  const from = fromHeader();
 
   try {
     await transporter.sendMail({
-      from: `"${BUSINESS.name}" <${from}>`,
+      from,
       to: kitchenNotifyTo(),
       replyTo: order.email,
       subject: `New order ${order.orderNumber} — ${order.customerName}`,
@@ -190,7 +211,7 @@ export async function sendNewOrderEmails(
   if (sendCustomer) {
     try {
       await transporter.sendMail({
-        from: `"${BUSINESS.name}" <${from}>`,
+        from,
         to: order.email,
         replyTo: kitchenNotifyTo(),
         subject: `We received your order ${order.orderNumber} — ${BUSINESS.name}`,
