@@ -90,7 +90,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: "fennel-olives-sourdough",
-    name: "Fennel & Olives Sourdough",
+    name: "Fennel & Olive Oil Sourdough",
     category: "sourdough",
     unitLabel: "loaf",
     priceCents: 1100,
