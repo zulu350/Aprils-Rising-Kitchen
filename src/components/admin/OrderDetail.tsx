@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   ORDER_STATUSES,
@@ -40,9 +41,12 @@ type OrderDetailData = {
 };
 
 export function OrderDetail({ id }: { id: string }) {
+  const router = useRouter();
   const [order, setOrder] = useState<OrderDetailData | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmNumber, setConfirmNumber] = useState("");
 
   const load = useCallback(async () => {
     setError("");
@@ -90,6 +94,34 @@ export function OrderDetail({ id }: { id: string }) {
       setError("Network error");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function deleteOrder() {
+    if (!order) return;
+    if (confirmNumber.trim() !== order.orderNumber) {
+      setError(`Type ${order.orderNumber} exactly to confirm delete.`);
+      return;
+    }
+    setDeleting(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/orders/${id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      if (!res.ok) {
+        setError(data.error || "Delete failed");
+        setDeleting(false);
+        return;
+      }
+      router.replace("/admin");
+      router.refresh();
+    } catch {
+      setError("Network error");
+      setDeleting(false);
     }
   }
 
@@ -271,6 +303,37 @@ export function OrderDetail({ id }: { id: string }) {
           <span>Total</span>
           <span className="tabular-nums">{formatMoney(order.totalCents)}</span>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-red-200 bg-red-50/80 p-5">
+        <h3 className="font-display text-lg text-red-900">Delete order</h3>
+        <p className="mt-2 text-sm text-red-900/80">
+          Permanently removes this order from the kitchen list and database.
+          Use for test orders or mistakes. This cannot be undone.
+        </p>
+        <label className="mt-4 block text-sm text-red-950">
+          Type{" "}
+          <span className="font-semibold tabular-nums">{order.orderNumber}</span>{" "}
+          to confirm
+          <input
+            type="text"
+            value={confirmNumber}
+            onChange={(e) => setConfirmNumber(e.target.value)}
+            autoComplete="off"
+            placeholder={order.orderNumber}
+            className="mt-1 w-full max-w-xs rounded-xl border border-red-200 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-200"
+          />
+        </label>
+        <button
+          type="button"
+          disabled={
+            deleting || confirmNumber.trim() !== order.orderNumber
+          }
+          onClick={() => void deleteOrder()}
+          className="mt-4 rounded-full bg-red-800 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-900 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {deleting ? "Deleting…" : "Delete permanently"}
+        </button>
       </section>
     </div>
   );

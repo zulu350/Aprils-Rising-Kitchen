@@ -81,3 +81,24 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 }
+
+export async function DELETE(_request: Request, { params }: Params) {
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  try {
+    // OrderItem rows cascade-delete via Prisma schema relation
+    const order = await prisma.order.delete({
+      where: { id },
+    });
+    return NextResponse.json({
+      ok: true,
+      orderNumber: order.orderNumber,
+    });
+  } catch {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+}
