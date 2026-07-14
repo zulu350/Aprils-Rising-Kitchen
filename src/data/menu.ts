@@ -220,7 +220,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: "ube-cheese-spanish-bread",
-    name: "Ube Cheese Spanish Bread",
+    name: "Ube Spanish Bread",
     category: "rolls",
     unitLabel: "dozen",
     priceCents: 2500,
