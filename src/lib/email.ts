@@ -17,6 +17,8 @@ export type OrderEmailPayload = {
   paymentMethod: string;
   subtotalCents: number;
   totalCents: number;
+  /** ISO timestamp when the order was placed */
+  createdAt?: string;
   items: Array<{
     name: string;
     unitLabel: string;
@@ -25,6 +27,19 @@ export type OrderEmailPayload = {
     lineTotalCents: number;
   }>;
 };
+
+function formatPlacedAt(iso?: string): string {
+  if (!iso) return "";
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: BUSINESS.timezone,
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
 
 function isEmailConfigured(): boolean {
   return Boolean(
@@ -119,8 +134,11 @@ function buildKitchenText(order: OrderEmailPayload): string {
     `New order ${order.orderNumber}`,
     "",
     `Customer: ${order.customerName}`,
-    `Email: ${order.email}`,
+    `Email: ${order.email || "(not provided)"}`,
     `Phone: ${order.phone}`,
+    order.createdAt
+      ? `Placed: ${formatPlacedAt(order.createdAt)} (${BUSINESS.timezone})`
+      : null,
     "",
     `Preferred date: ${order.preferredDate}`,
     order.preferredTimeWindow
@@ -145,12 +163,14 @@ function buildKitchenText(order: OrderEmailPayload): string {
 
 function buildCustomerText(order: OrderEmailPayload): string {
   const confirmUrl = `${siteBaseUrl()}/order/${order.orderNumber}`;
+  const placed = formatPlacedAt(order.createdAt);
   return [
     `Hi ${order.customerName},`,
     "",
     `Thank you for ordering from ${BUSINESS.name}! We received your order and will confirm availability and timing soon.`,
     "",
     `Order number: ${order.orderNumber}`,
+    placed ? `Order placed: ${placed} (${BUSINESS.timezone})` : null,
     `Preferred date: ${order.preferredDate}`,
     order.preferredTimeWindow
       ? `Time window: ${order.preferredTimeWindow}`
@@ -198,7 +218,7 @@ export async function sendNewOrderEmails(
     await transporter.sendMail({
       from,
       to: kitchenNotifyTo(),
-      replyTo: order.email,
+      ...(order.email ? { replyTo: order.email } : {}),
       subject: `New order ${order.orderNumber} — ${order.customerName}`,
       text: buildKitchenText(order),
     });
@@ -207,7 +227,8 @@ export async function sendNewOrderEmails(
     console.error(`[email] Kitchen notify failed for ${order.orderNumber}:`, err);
   }
 
-  const sendCustomer = process.env.EMAIL_CUSTOMER_CONFIRM !== "false";
+  const sendCustomer =
+    process.env.EMAIL_CUSTOMER_CONFIRM !== "false" && Boolean(order.email);
   if (sendCustomer) {
     try {
       await transporter.sendMail({

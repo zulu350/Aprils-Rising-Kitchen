@@ -192,7 +192,11 @@ export function OrderDetail({ id }: { id: string }) {
           <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">
             Contact
           </h3>
-          <p className="mt-1 text-espresso">{order.email}</p>
+          {order.email ? (
+            <p className="mt-1 text-espresso">{order.email}</p>
+          ) : (
+            <p className="mt-1 text-sm text-muted">No email provided</p>
+          )}
           <a
             href={`tel:${order.phone}`}
             className="text-espresso tabular-nums hover:underline"

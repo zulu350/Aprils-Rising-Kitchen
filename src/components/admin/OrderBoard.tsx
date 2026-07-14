@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ORDER_STATUSES,
   STATUS_COLORS,
@@ -21,8 +21,20 @@ type OrderRow = {
   paymentStatus: string;
   paymentMethod: string;
   totalCents: number;
+  createdAt: string;
   items: Array<{ name: string; quantity: number }>;
 };
+
+type SortKey =
+  | "preferredDateAsc"
+  | "preferredDateDesc"
+  | "placedDesc"
+  | "placedAsc"
+  | "totalDesc"
+  | "totalAsc"
+  | "orderNumberDesc"
+  | "orderNumberAsc"
+  | "nameAsc";
 
 const FILTERS = [
   { value: "active", label: "Active" },
@@ -30,8 +42,74 @@ const FILTERS = [
   ...ORDER_STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s] })),
 ];
 
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "preferredDateAsc", label: "Pickup/delivery date (soonest)" },
+  { value: "preferredDateDesc", label: "Pickup/delivery date (latest)" },
+  { value: "placedDesc", label: "Date placed (newest)" },
+  { value: "placedAsc", label: "Date placed (oldest)" },
+  { value: "totalDesc", label: "Total (high → low)" },
+  { value: "totalAsc", label: "Total (low → high)" },
+  { value: "orderNumberDesc", label: "Order # (newest)" },
+  { value: "orderNumberAsc", label: "Order # (oldest)" },
+  { value: "nameAsc", label: "Customer name (A–Z)" },
+];
+
+function sortOrders(orders: OrderRow[], sort: SortKey): OrderRow[] {
+  const list = [...orders];
+  const byDate = (a: string, b: string) => a.localeCompare(b);
+  const byPlaced = (a: OrderRow, b: OrderRow) =>
+    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+
+  switch (sort) {
+    case "preferredDateAsc":
+      return list.sort(
+        (a, b) =>
+          byDate(a.preferredDate, b.preferredDate) || byPlaced(b, a),
+      );
+    case "preferredDateDesc":
+      return list.sort(
+        (a, b) =>
+          byDate(b.preferredDate, a.preferredDate) || byPlaced(b, a),
+      );
+    case "placedDesc":
+      return list.sort((a, b) => byPlaced(b, a));
+    case "placedAsc":
+      return list.sort((a, b) => byPlaced(a, b));
+    case "totalDesc":
+      return list.sort((a, b) => b.totalCents - a.totalCents);
+    case "totalAsc":
+      return list.sort((a, b) => a.totalCents - b.totalCents);
+    case "orderNumberDesc":
+      return list.sort((a, b) => b.orderNumber.localeCompare(a.orderNumber));
+    case "orderNumberAsc":
+      return list.sort((a, b) => a.orderNumber.localeCompare(b.orderNumber));
+    case "nameAsc":
+      return list.sort((a, b) =>
+        a.customerName.localeCompare(b.customerName, undefined, {
+          sensitivity: "base",
+        }),
+      );
+    default:
+      return list;
+  }
+}
+
+function formatPlaced(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
+
 export function OrderBoard() {
   const [filter, setFilter] = useState("active");
+  const [sort, setSort] = useState<SortKey>("preferredDateAsc");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -67,9 +145,11 @@ export function OrderBoard() {
     void load();
   }, [load]);
 
+  const sorted = useMemo(() => sortOrders(orders, sort), [orders, sort]);
+
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           {FILTERS.map((f) => (
             <button
@@ -95,13 +175,34 @@ export function OrderBoard() {
         </button>
       </div>
 
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <label
+          htmlFor="order-sort"
+          className="text-sm font-medium text-brown"
+        >
+          Sort by
+        </label>
+        <select
+          id="order-sort"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortKey)}
+          className="rounded-full border border-linen bg-cream px-4 py-2 text-sm text-espresso outline-none focus:border-crust focus:ring-2 focus:ring-crust/30"
+        >
+          {SORT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {loading ? (
         <p className="text-muted">Loading orders…</p>
       ) : error ? (
         <p className="text-red-700" role="alert">
           {error}
         </p>
-      ) : orders.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <div className="rounded-2xl bg-cream p-8 text-center ring-1 ring-linen">
           <p className="font-display text-xl text-espresso">No orders here</p>
           <p className="mt-2 text-sm text-muted">
@@ -110,7 +211,7 @@ export function OrderBoard() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {orders.map((order) => (
+          {sorted.map((order) => (
             <li key={order.id}>
               <Link
                 href={`/admin/orders/${order.id}`}
@@ -141,7 +242,10 @@ export function OrderBoard() {
                       {order.customerName} · {order.phone}
                     </p>
                     <p className="mt-1 text-xs text-muted">
-                      {order.preferredDate} · {order.fulfillment}
+                      For {order.preferredDate} · {order.fulfillment}
+                      {order.createdAt
+                        ? ` · Placed ${formatPlaced(order.createdAt)}`
+                        : ""}
                       {" · "}
                       {order.items
                         .map((i) => `${i.quantity}× ${i.name}`)

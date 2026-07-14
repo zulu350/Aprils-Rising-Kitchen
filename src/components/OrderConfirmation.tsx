@@ -20,6 +20,7 @@ type OrderPayload = {
   paymentMethod: string;
   subtotalCents: number;
   totalCents: number;
+  createdAt?: string;
   items: Array<{
     name: string;
     unitLabel: string;
@@ -111,12 +112,23 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
             {order.preferredTimeWindow ? (
               <p className="text-muted">{order.preferredTimeWindow}</p>
             ) : null}
+            {order.createdAt ? (
+              <p className="mt-1 text-xs text-muted">
+                Placed{" "}
+                {new Date(order.createdAt).toLocaleString("en-US", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </p>
+            ) : null}
           </div>
           <div>
             <p className="text-xs font-semibold tracking-wide text-muted uppercase">
               Contact
             </p>
-            <p className="text-espresso">{order.email}</p>
+            {order.email ? (
+              <p className="text-espresso">{order.email}</p>
+            ) : null}
             <p className="text-espresso tabular-nums">{order.phone}</p>
           </div>
           <div>

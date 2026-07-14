@@ -14,7 +14,7 @@ export type CartLineInput = {
 
 export type CreateOrderInput = {
   customerName: string;
-  email: string;
+  email?: string;
   phone: string;
   fulfillment: "pickup" | "delivery";
   deliveryCity?: string;
@@ -109,17 +109,29 @@ export function minPreferredDateISO(itemIds: string[]): string {
 
 export function validateCreateOrder(
   body: CreateOrderInput,
-): { ok: true; lines: ResolvedLine[]; subtotalCents: number } | { ok: false; error: string } {
+):
+  | {
+      ok: true;
+      lines: ResolvedLine[];
+      subtotalCents: number;
+      email: string;
+    }
+  | { ok: false; error: string } {
   const name = body.customerName?.trim() ?? "";
-  const email = body.email?.trim() ?? "";
+  const emailRaw = body.email?.trim() ?? "";
   const phone = body.phone?.trim() ?? "";
   const preferredDate = body.preferredDate?.trim() ?? "";
 
   if (name.length < 2) return { ok: false, error: "Please enter your name." };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return { ok: false, error: "Please enter a valid email." };
+  // Email is optional; if provided it must look valid
+  if (emailRaw && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw)) {
+    return {
+      ok: false,
+      error: "Please enter a valid email, or leave it blank.",
+    };
   }
   if (phone.length < 7) return { ok: false, error: "Please enter a phone number." };
+  const email = emailRaw ? emailRaw.toLowerCase() : "";
 
   if (body.fulfillment !== "pickup" && body.fulfillment !== "delivery") {
     return { ok: false, error: "Choose pickup or delivery." };
@@ -153,7 +165,7 @@ export function validateCreateOrder(
   }
 
   const subtotalCents = lines.reduce((s, l) => s + l.lineTotalCents, 0);
-  return { ok: true, lines, subtotalCents };
+  return { ok: true, lines, subtotalCents, email };
 }
 
 export async function nextOrderNumber(

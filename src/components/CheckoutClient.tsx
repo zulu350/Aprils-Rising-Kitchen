@@ -131,11 +131,13 @@ export function CheckoutClient() {
               />
             </label>
             <label className="block text-sm">
-              <span className="font-medium text-brown">Email *</span>
+              <span className="font-medium text-brown">Email</span>
+              <span className="ml-1 text-xs font-normal text-muted">
+                (optional — for order confirmation)
+              </span>
               <input
                 name="email"
                 type="email"
-                required
                 autoComplete="email"
                 className="mt-1 w-full rounded-xl border border-linen bg-cream px-3 py-2.5 outline-none focus:border-crust focus:ring-2 focus:ring-crust/30"
               />

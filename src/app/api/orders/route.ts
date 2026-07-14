@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  const { lines, subtotalCents } = result;
+  const { lines, subtotalCents, email } = result;
   const deliveryFeeCents = 0;
   const totalCents = subtotalCents + deliveryFeeCents;
 
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       data: {
         orderNumber,
         customerName: body.customerName.trim(),
-        email: body.email.trim().toLowerCase(),
+        email,
         phone: body.phone.trim(),
         fulfillment: body.fulfillment,
         deliveryCity:
@@ -83,6 +83,7 @@ export async function POST(request: Request) {
       paymentMethod: order.paymentMethod,
       subtotalCents: order.subtotalCents,
       totalCents: order.totalCents,
+      createdAt: order.createdAt.toISOString(),
       items: order.items.map((item) => ({
         name: item.name,
         unitLabel: item.unitLabel,
