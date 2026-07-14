@@ -28,6 +28,10 @@ export type OrderEmailPayload = {
   }>;
 };
 
+function env(name: string): string {
+  return (process.env[name] ?? "").trim();
+}
+
 function formatPlacedAt(iso?: string): string {
   if (!iso) return "";
   try {
@@ -41,36 +45,33 @@ function formatPlacedAt(iso?: string): string {
   }
 }
 
-function isEmailConfigured(): boolean {
-  return Boolean(
-    process.env.SMTP_HOST &&
-      process.env.SMTP_USER &&
-      process.env.SMTP_PASS,
-  );
+export function isEmailConfigured(): boolean {
+  return Boolean(env("SMTP_HOST") && env("SMTP_USER") && env("SMTP_PASS"));
 }
 
 function getTransporter() {
-  const host = process.env.SMTP_HOST!;
-  const port = Number(process.env.SMTP_PORT || "587");
-  const secure =
-    process.env.SMTP_SECURE === "true" || port === 465;
+  const host = env("SMTP_HOST");
+  const port = Number(env("SMTP_PORT") || "587");
+  const secure = env("SMTP_SECURE") === "true" || port === 465;
 
   return nodemailer.createTransport({
     host,
     port,
     secure,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: env("SMTP_USER"),
+      pass: env("SMTP_PASS"),
     },
+    connectionTimeout: 20_000,
+    greetingTimeout: 20_000,
+    socketTimeout: 30_000,
   });
 }
 
 /** Build a clean From: name + address (avoids double angle-brackets). */
 function fromHeader(): { name: string; address: string } {
-  const raw = process.env.SMTP_FROM?.trim();
+  const raw = env("SMTP_FROM");
   if (raw) {
-    // Full form: Name <email@domain> or just <email@domain>
     const angled = raw.match(/^(.*?)\s*<([^>]+)>\s*$/);
     if (angled) {
       const name = angled[1].replace(/^["']|["']$/g, "").trim();
@@ -79,32 +80,22 @@ function fromHeader(): { name: string; address: string } {
         address: angled[2].trim(),
       };
     }
-    // Bare email
     if (raw.includes("@") && !raw.includes(" ")) {
       return { name: BUSINESS.name, address: raw };
     }
   }
-  const address = (
-    process.env.SMTP_USER?.trim() ||
-    BUSINESS.email
-  ).replace(/^<|>$/g, "");
+  const address = (env("SMTP_USER") || BUSINESS.email).replace(/^<|>$/g, "");
   return { name: BUSINESS.name, address };
 }
 
 function kitchenNotifyTo(): string {
-  return (
-    process.env.ORDER_NOTIFY_EMAIL?.trim() ||
-    BUSINESS.email
-  );
+  return env("ORDER_NOTIFY_EMAIL") || BUSINESS.email;
 }
 
 function siteBaseUrl(): string {
-  // Prefer explicit public URL (custom domain on Netlify).
-  // Set NEXT_PUBLIC_SITE_URL=https://www.aprilsrisingkitchen.com in Netlify env,
-  // then redeploy — used in "View your order" / admin links in emails.
   const raw =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    process.env.URL?.trim() || // Netlify deploy URL (fallback)
+    env("NEXT_PUBLIC_SITE_URL") ||
+    env("URL") || // Netlify deploy URL fallback
     "http://localhost:3000";
   return raw.replace(/\/$/, "");
 }
@@ -198,24 +189,28 @@ function buildCustomerText(order: OrderEmailPayload): string {
 /**
  * Sends kitchen + customer emails for a new order.
  * Never throws — order creation must succeed even if mail fails.
- * No-ops with a console warning when SMTP is not configured.
+ * Callers on serverless MUST await this so the process stays alive until SMTP finishes.
  */
 export async function sendNewOrderEmails(
   order: OrderEmailPayload,
-): Promise<{ kitchen: boolean; customer: boolean }> {
+): Promise<{ kitchen: boolean; customer: boolean; skipReason?: string }> {
   if (!isEmailConfigured()) {
-    console.warn(
-      `[email] SMTP not configured — skipped notify for ${order.orderNumber}. Set SMTP_HOST, SMTP_USER, SMTP_PASS.`,
-    );
-    return { kitchen: false, customer: false };
+    const skipReason =
+      "SMTP not configured (need SMTP_HOST, SMTP_USER, SMTP_PASS)";
+    console.warn(`[email] ${skipReason} — order ${order.orderNumber}`);
+    return { kitchen: false, customer: false, skipReason };
   }
 
   const result = { kitchen: false, customer: false };
   const transporter = getTransporter();
   const from = fromHeader();
 
+  console.log(
+    `[email] Sending for ${order.orderNumber} via ${env("SMTP_HOST")}:${env("SMTP_PORT") || "587"} from ${from.address} → kitchen ${kitchenNotifyTo()}`,
+  );
+
   try {
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from,
       to: kitchenNotifyTo(),
       ...(order.email ? { replyTo: order.email } : {}),
@@ -223,15 +218,20 @@ export async function sendNewOrderEmails(
       text: buildKitchenText(order),
     });
     result.kitchen = true;
+    console.log(
+      `[email] Kitchen OK ${order.orderNumber} messageId=${info.messageId ?? "?"}`,
+    );
   } catch (err) {
-    console.error(`[email] Kitchen notify failed for ${order.orderNumber}:`, err);
+    console.error(
+      `[email] Kitchen FAILED ${order.orderNumber}:`,
+      err instanceof Error ? err.message : err,
+    );
   }
 
-  const sendCustomer =
-    process.env.EMAIL_CUSTOMER_CONFIRM !== "false" && Boolean(order.email);
-  if (sendCustomer) {
+  const customerConfirmEnabled = env("EMAIL_CUSTOMER_CONFIRM") !== "false";
+  if (customerConfirmEnabled && order.email) {
     try {
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from,
         to: order.email,
         replyTo: kitchenNotifyTo(),
@@ -239,12 +239,23 @@ export async function sendNewOrderEmails(
         text: buildCustomerText(order),
       });
       result.customer = true;
+      console.log(
+        `[email] Customer OK ${order.orderNumber} to=${order.email} messageId=${info.messageId ?? "?"}`,
+      );
     } catch (err) {
       console.error(
-        `[email] Customer confirm failed for ${order.orderNumber}:`,
-        err,
+        `[email] Customer FAILED ${order.orderNumber}:`,
+        err instanceof Error ? err.message : err,
       );
     }
+  } else if (!order.email) {
+    console.log(
+      `[email] Customer skipped ${order.orderNumber} (no customer email)`,
+    );
+  } else {
+    console.log(
+      `[email] Customer skipped ${order.orderNumber} (EMAIL_CUSTOMER_CONFIRM=false)`,
+    );
   }
 
   return result;

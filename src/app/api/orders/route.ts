@@ -67,37 +67,45 @@ export async function POST(request: Request) {
       include: { items: true },
     });
 
-    // Never block the customer if mail fails or is unconfigured
-    void sendNewOrderEmails({
-      id: order.id,
-      orderNumber: order.orderNumber,
-      customerName: order.customerName,
-      email: order.email,
-      phone: order.phone,
-      fulfillment: order.fulfillment,
-      deliveryCity: order.deliveryCity,
-      deliveryAddress: order.deliveryAddress,
-      preferredDate: order.preferredDate,
-      preferredTimeWindow: order.preferredTimeWindow,
-      notes: order.notes,
-      paymentMethod: order.paymentMethod,
-      subtotalCents: order.subtotalCents,
-      totalCents: order.totalCents,
-      createdAt: order.createdAt.toISOString(),
-      items: order.items.map((item) => ({
-        name: item.name,
-        unitLabel: item.unitLabel,
-        quantity: item.quantity,
-        unitPriceCents: item.unitPriceCents,
-        lineTotalCents: item.lineTotalCents,
-      })),
-    }).catch((err) => {
+    // MUST await on Netlify serverless — fire-and-forget often dies before SMTP finishes
+    let emailStatus = { kitchen: false, customer: false as boolean };
+    try {
+      emailStatus = await sendNewOrderEmails({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        customerName: order.customerName,
+        email: order.email,
+        phone: order.phone,
+        fulfillment: order.fulfillment,
+        deliveryCity: order.deliveryCity,
+        deliveryAddress: order.deliveryAddress,
+        preferredDate: order.preferredDate,
+        preferredTimeWindow: order.preferredTimeWindow,
+        notes: order.notes,
+        paymentMethod: order.paymentMethod,
+        subtotalCents: order.subtotalCents,
+        totalCents: order.totalCents,
+        createdAt: order.createdAt.toISOString(),
+        items: order.items.map((item) => ({
+          name: item.name,
+          unitLabel: item.unitLabel,
+          quantity: item.quantity,
+          unitPriceCents: item.unitPriceCents,
+          lineTotalCents: item.lineTotalCents,
+        })),
+      });
+    } catch (err) {
       console.error("Order email notify error:", err);
-    });
+    }
 
     return NextResponse.json({
       orderNumber: order.orderNumber,
       id: order.id,
+      // Helps diagnose production without exposing SMTP secrets
+      email: {
+        kitchen: emailStatus.kitchen,
+        customer: emailStatus.customer,
+      },
     });
   } catch (err) {
     console.error("Create order failed:", err);
