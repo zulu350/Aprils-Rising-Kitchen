@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { PaymentQrPanel } from "@/components/PaymentQrPanel";
 import { formatPrice } from "@/data/menu";
 import {
   STATUS_COLORS,
@@ -10,6 +11,7 @@ import {
   type OrderStatus,
 } from "@/lib/admin-orders";
 import { BUSINESS } from "@/lib/constants";
+
 
 type OrderPayload = {
   orderNumber: string;
@@ -243,6 +245,20 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
           </p>
         ) : null}
       </div>
+
+      {order.paymentMethod === "cash" ? (
+        <p className="mt-6 text-sm text-muted">
+          You chose cash — pay at pickup or delivery. Prefer Venmo or Zelle
+          instead? Call or text us anytime.
+        </p>
+      ) : (
+        <div className="mt-6">
+          <PaymentQrPanel
+            method={order.paymentMethod}
+            showBothWhenUndecided
+          />
+        </div>
+      )}
 
       <p className="mt-8 text-sm text-brown">
         Questions? Call or text{" "}

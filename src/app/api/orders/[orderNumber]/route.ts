@@ -52,6 +52,10 @@ export async function GET(_request: Request, { params }: Params) {
     })),
     pickupAddress,
     paymentNote:
-      "Cash, Venmo, or Zelle — payment details when we contact you or on confirmation follow-up.",
+      order.paymentMethod === "venmo" || order.paymentMethod === "zelle"
+        ? "Scan the QR below to pay, or use the handle shown. Cash also welcome at pickup/delivery."
+        : order.paymentMethod === "cash"
+          ? "Cash at pickup or delivery. Need Venmo or Zelle? Call or text us."
+          : "You can pay anytime with Venmo, Zelle (scan the codes below), or cash at pickup/delivery.",
   });
 }

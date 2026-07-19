@@ -46,3 +46,6 @@ next-env.d.ts
 /data/*.db-journal
 
 /src/generated/prisma
+
+# Local reference images (not used by the live site)
+ark-assets/

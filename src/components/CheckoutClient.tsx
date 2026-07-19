@@ -8,9 +8,11 @@ import {
   formatPrice,
   getRequiredLeadTimeHours,
 } from "@/data/menu";
+import { PaymentQrPanel } from "@/components/PaymentQrPanel";
 import { useCart } from "@/lib/cart";
-import { minPreferredDateISO } from "@/lib/orders";
 import { BUSINESS } from "@/lib/constants";
+import { minPreferredDateISO } from "@/lib/orders";
+import type { PaymentMethodPreference } from "@/lib/payment";
 
 export function CheckoutClient() {
   const router = useRouter();
@@ -28,6 +30,8 @@ export function CheckoutClient() {
   const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">(
     "pickup",
   );
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethodPreference>("undecided");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -78,7 +82,7 @@ export function CheckoutClient() {
       preferredDate: String(form.get("preferredDate") ?? ""),
       preferredTimeWindow: String(form.get("preferredTimeWindow") ?? "") || undefined,
       notes: String(form.get("notes") ?? "") || undefined,
-      paymentMethod: String(form.get("paymentMethod") ?? "undecided"),
+      paymentMethod,
       items: details.map((d) => ({
         menuItemId: d.menuItemId,
         quantity: d.quantity,
@@ -249,11 +253,16 @@ export function CheckoutClient() {
               Payment preference
             </legend>
             <p className="text-sm text-muted">
-              Cash, Venmo, or Zelle — payment details when we contact you.
+              Cash, Venmo, or Zelle. Choose Venmo or Zelle to show a QR code you
+              can scan. Codes also appear on your order page after you place the
+              order.
             </p>
             <select
               name="paymentMethod"
-              defaultValue="undecided"
+              value={paymentMethod}
+              onChange={(e) =>
+                setPaymentMethod(e.target.value as PaymentMethodPreference)
+              }
               className="w-full rounded-xl border border-linen bg-cream px-3 py-2.5 text-sm outline-none focus:border-crust focus:ring-2 focus:ring-crust/30"
             >
               <option value="undecided">Decide later</option>
@@ -261,6 +270,12 @@ export function CheckoutClient() {
               <option value="venmo">Venmo</option>
               <option value="zelle">Zelle</option>
             </select>
+            <PaymentQrPanel method={paymentMethod} />
+            {paymentMethod === "cash" ? (
+              <p className="text-sm text-muted">
+                Pay with cash at pickup or delivery.
+              </p>
+            ) : null}
             <label className="block text-sm">
               <span className="font-medium text-brown">Notes / custom requests</span>
               <textarea
