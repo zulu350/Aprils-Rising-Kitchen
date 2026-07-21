@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ReviewInvite } from "@/components/ReviewInvite";
 import { BUSINESS } from "@/lib/constants";
 
 export function Footer() {
@@ -86,6 +87,9 @@ export function Footer() {
               Delivery in {BUSINESS.serviceArea}
             </li>
             <li className="text-muted">Cash · Venmo · Zelle</li>
+            <li className="pt-3">
+              <ReviewInvite variant="footer" />
+            </li>
           </ul>
         </div>
       </div>

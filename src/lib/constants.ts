@@ -7,6 +7,9 @@ export const BUSINESS = {
   phoneHref: "tel:+13603837464",
   facebook:
     "https://www.facebook.com/share/1BcSvb4rRz/?mibextid=wwXIfr",
+  /** Google Maps / Business review short link */
+  googleMapsReview:
+    "https://maps.app.goo.gl/TXRajMkuuTqZ6HMQA",
   serviceArea: "Boise & Meridian",
   timezone: "America/Boise",
 } as const;

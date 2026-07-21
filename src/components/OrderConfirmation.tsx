@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PaymentQrPanel } from "@/components/PaymentQrPanel";
+import { ReviewInvite } from "@/components/ReviewInvite";
 import { formatPrice } from "@/data/menu";
 import {
   STATUS_COLORS,
@@ -259,6 +260,18 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
           />
         </div>
       )}
+
+      {order.status !== "cancelled" ? (
+        <div className="mt-8">
+          <ReviewInvite
+            variant={
+              order.status === "ready" || order.status === "completed"
+                ? "order-highlight"
+                : "order"
+            }
+          />
+        </div>
+      ) : null}
 
       <p className="mt-8 text-sm text-brown">
         Questions? Call or text{" "}
