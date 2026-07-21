@@ -168,11 +168,23 @@ export function validateCreateOrder(
   return { ok: true, lines, subtotalCents, email };
 }
 
+/**
+ * Next order number based on the highest existing ARK-####, not row count.
+ * Using count() breaks after deletes (e.g. 5 rows left → reuses ARK-1006).
+ */
 export async function nextOrderNumber(
-  countExisting: () => Promise<number>,
+  existingNumbers: () => Promise<string[]>,
 ): Promise<string> {
-  const count = await countExisting();
-  return `ARK-${1001 + count}`;
+  const numbers = await existingNumbers();
+  let max = 1000;
+  for (const orderNumber of numbers) {
+    const m = orderNumber.match(/(\d+)\s*$/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (Number.isFinite(n) && n > max) max = n;
+    }
+  }
+  return `ARK-${max + 1}`;
 }
 
 export { formatPrice, UNIT_LABELS };

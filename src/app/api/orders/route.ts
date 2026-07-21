@@ -27,7 +27,12 @@ export async function POST(request: Request) {
   const totalCents = subtotalCents + deliveryFeeCents;
 
   try {
-    const orderNumber = await nextOrderNumber(() => prisma.order.count());
+    const orderNumber = await nextOrderNumber(async () => {
+      const rows = await prisma.order.findMany({
+        select: { orderNumber: true },
+      });
+      return rows.map((r) => r.orderNumber);
+    });
 
     const order = await prisma.order.create({
       data: {
@@ -108,9 +113,20 @@ export async function POST(request: Request) {
       },
     });
   } catch (err) {
-    console.error("Create order failed:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Create order failed:", message, err);
+    // Unique violation on orderNumber (Postgres 23505) — rare race after fix
+    const isUnique =
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code?: string }).code === "P2002";
     return NextResponse.json(
-      { error: "Could not save your order. Please try again or call us." },
+      {
+        error: isUnique
+          ? "Order number conflict — please try once more."
+          : "Could not save your order. Please try again or call us.",
+      },
       { status: 500 },
     );
   }
