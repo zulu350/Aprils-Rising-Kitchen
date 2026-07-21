@@ -95,14 +95,21 @@ export function CheckoutClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = (await res.json()) as { orderNumber?: string; error?: string };
+      const data = (await res.json()) as {
+        orderNumber?: string;
+        accessToken?: string;
+        error?: string;
+      };
       if (!res.ok) {
         setError(data.error || "Something went wrong. Please try again.");
         setSubmitting(false);
         return;
       }
       clearCart();
-      router.push(`/order/${data.orderNumber}`);
+      const token = data.accessToken
+        ? `?t=${encodeURIComponent(data.accessToken)}`
+        : "";
+      router.push(`/order/${data.orderNumber}${token}`);
     } catch {
       setError("Network error. Please try again or call us.");
       setSubmitting(false);

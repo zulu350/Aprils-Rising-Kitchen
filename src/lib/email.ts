@@ -5,6 +5,7 @@ import { BUSINESS } from "@/lib/constants";
 export type OrderEmailPayload = {
   id: string;
   orderNumber: string;
+  accessToken: string;
   customerName: string;
   email: string;
   phone: string;
@@ -152,8 +153,12 @@ function buildKitchenText(order: OrderEmailPayload): string {
     .join("\n");
 }
 
+function customerOrderUrl(order: OrderEmailPayload): string {
+  return `${siteBaseUrl()}/order/${encodeURIComponent(order.orderNumber)}?t=${encodeURIComponent(order.accessToken)}`;
+}
+
 function buildCustomerText(order: OrderEmailPayload): string {
-  const confirmUrl = `${siteBaseUrl()}/order/${order.orderNumber}`;
+  const confirmUrl = customerOrderUrl(order);
   const placed = formatPlacedAt(order.createdAt);
   return [
     `Hi ${order.customerName},`,

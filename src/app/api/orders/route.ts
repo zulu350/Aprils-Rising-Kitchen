@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendNewOrderEmails } from "@/lib/email";
@@ -8,6 +9,10 @@ import {
 } from "@/lib/orders";
 
 export const runtime = "nodejs";
+
+function newAccessToken(): string {
+  return randomBytes(24).toString("base64url");
+}
 
 export async function POST(request: Request) {
   let body: CreateOrderInput;
@@ -34,9 +39,12 @@ export async function POST(request: Request) {
       return rows.map((r) => r.orderNumber);
     });
 
+    const accessToken = newAccessToken();
+
     const order = await prisma.order.create({
       data: {
         orderNumber,
+        accessToken,
         customerName: body.customerName.trim(),
         email,
         phone: body.phone.trim(),
@@ -78,6 +86,7 @@ export async function POST(request: Request) {
       emailStatus = await sendNewOrderEmails({
         id: order.id,
         orderNumber: order.orderNumber,
+        accessToken: order.accessToken,
         customerName: order.customerName,
         email: order.email,
         phone: order.phone,
@@ -105,6 +114,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       orderNumber: order.orderNumber,
+      accessToken: order.accessToken,
       id: order.id,
       // Helps diagnose production without exposing SMTP secrets
       email: {

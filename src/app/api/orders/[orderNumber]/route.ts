@@ -5,19 +5,42 @@ export const runtime = "nodejs";
 
 type Params = { params: Promise<{ orderNumber: string }> };
 
-export async function GET(_request: Request, { params }: Params) {
+/**
+ * Public order lookup — requires unguessable access token:
+ *   GET /api/orders/ARK-1011?t=...
+ * Order number alone is not enough (prevents sequential guessing).
+ */
+export async function GET(request: Request, { params }: Params) {
   const { orderNumber } = await params;
   if (!orderNumber) {
     return NextResponse.json({ error: "Missing order number." }, { status: 400 });
   }
 
-  const order = await prisma.order.findUnique({
-    where: { orderNumber },
+  const token = new URL(request.url).searchParams.get("t")?.trim() ?? "";
+  if (!token) {
+    return NextResponse.json(
+      {
+        error:
+          "This order link is incomplete. Please use the full link from your confirmation email or checkout page.",
+      },
+      { status: 401 },
+    );
+  }
+
+  const order = await prisma.order.findFirst({
+    where: { orderNumber, accessToken: token },
     include: { items: true },
   });
 
+  // Same message whether missing or wrong token — don't leak which order numbers exist
   if (!order) {
-    return NextResponse.json({ error: "Order not found." }, { status: 404 });
+    return NextResponse.json(
+      {
+        error:
+          "Order not found, or this link is invalid. Use the full link from your email or checkout confirmation.",
+      },
+      { status: 404 },
+    );
   }
 
   const pickupAddress =

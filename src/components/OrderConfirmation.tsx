@@ -68,7 +68,13 @@ function statusHelp(status: string): string {
   return "We’ll update this page as your order progresses.";
 }
 
-export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
+export function OrderConfirmation({
+  orderNumber,
+  accessToken,
+}: {
+  orderNumber: string;
+  accessToken: string;
+}) {
   const [order, setOrder] = useState<OrderPayload | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -76,9 +82,19 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!accessToken) {
+        if (!cancelled) {
+          setError(
+            "This order link is incomplete. Please use the full link from your confirmation email or the page shown right after checkout.",
+          );
+          setLoading(false);
+        }
+        return;
+      }
       try {
+        const qs = new URLSearchParams({ t: accessToken });
         const res = await fetch(
-          `/api/orders/${encodeURIComponent(orderNumber)}`,
+          `/api/orders/${encodeURIComponent(orderNumber)}?${qs.toString()}`,
         );
         const data = await res.json();
         if (!res.ok) {
@@ -95,7 +111,7 @@ export function OrderConfirmation({ orderNumber }: { orderNumber: string }) {
     return () => {
       cancelled = true;
     };
-  }, [orderNumber]);
+  }, [orderNumber, accessToken]);
 
   if (loading) {
     return (

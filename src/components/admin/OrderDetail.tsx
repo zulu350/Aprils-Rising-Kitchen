@@ -15,6 +15,7 @@ import {
 type OrderDetailData = {
   id: string;
   orderNumber: string;
+  accessToken?: string;
   customerName: string;
   email: string;
   phone: string;
@@ -269,6 +270,22 @@ export function OrderDetail({ id }: { id: string }) {
             {new Date(order.createdAt).toLocaleString()}
           </p>
         </div>
+        {order.accessToken ? (
+          <div className="sm:col-span-2">
+            <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">
+              Customer order link
+            </h3>
+            <p className="mt-1 break-all text-xs text-muted">
+              {(process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+                "https://www.aprilsrisingkitchen.com") +
+                `/order/${order.orderNumber}?t=${order.accessToken}`}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              Private link (includes secret token). Safe to text to the customer;
+              order number alone will not open their page.
+            </p>
+          </div>
+        ) : null}
         {order.notes ? (
           <div className="sm:col-span-2">
             <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">

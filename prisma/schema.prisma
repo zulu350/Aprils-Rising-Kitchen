@@ -11,6 +11,8 @@ datasource db {
 model Order {
   id                  String      @id @default(cuid())
   orderNumber         String      @unique
+  /// Unguessable secret for the customer order page (required in URL)
+  accessToken         String      @unique
   customerName        String
   email               String
   phone               String
