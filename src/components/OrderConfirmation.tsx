@@ -25,6 +25,10 @@ type OrderPayload = {
   preferredDate: string;
   preferredTimeWindow: string | null;
   notes: string | null;
+  adminNote?: string | null;
+  adminEditedAt?: string | null;
+  adjustmentCents?: number;
+  adjustmentLabel?: string | null;
   status: string;
   paymentMethod: string;
   subtotalCents: number;
@@ -236,11 +240,30 @@ export function OrderConfirmation({
           </div>
         </div>
 
+        {order.adminEditedAt ? (
+          <div className="rounded-xl bg-sky-50 px-4 py-3 text-sm text-sky-950 ring-1 ring-sky-100">
+            <p className="font-semibold">Order updated</p>
+            <p className="mt-1 text-sky-900/90">
+              The kitchen customized this order (special request). The amount
+              owed below is current.
+            </p>
+            {order.adminNote ? (
+              <p className="mt-2 text-sky-950">
+                <span className="font-medium">From the kitchen: </span>
+                {order.adminNote}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <ul className="space-y-2 border-t border-linen pt-4 text-sm">
           {order.items.map((item, i) => (
             <li key={`${item.name}-${i}`} className="flex justify-between gap-3">
               <span>
                 {item.quantity}× {item.name}
+                {item.unitLabel ? (
+                  <span className="text-muted"> ({item.unitLabel})</span>
+                ) : null}
               </span>
               <span className="tabular-nums">
                 {formatPrice(item.lineTotalCents)}
@@ -249,15 +272,25 @@ export function OrderConfirmation({
           ))}
         </ul>
 
+        {(order.adjustmentCents ?? 0) !== 0 ? (
+          <div className="flex justify-between text-sm text-brown">
+            <span>{order.adjustmentLabel || "Adjustment"}</span>
+            <span className="tabular-nums">
+              {(order.adjustmentCents ?? 0) > 0 ? "+" : ""}
+              {formatPrice(order.adjustmentCents ?? 0)}
+            </span>
+          </div>
+        ) : null}
+
         <div className="flex justify-between border-t border-linen pt-4 font-semibold text-espresso">
-          <span>Total</span>
+          <span>Amount owed</span>
           <span className="tabular-nums">{formatPrice(order.totalCents)}</span>
         </div>
 
         <p className="text-sm text-muted">{order.paymentNote}</p>
         {order.notes ? (
           <p className="text-sm">
-            <span className="font-medium text-brown">Notes: </span>
+            <span className="font-medium text-brown">Your notes: </span>
             {order.notes}
           </p>
         ) : null}

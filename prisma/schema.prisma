@@ -27,6 +27,12 @@ model Order {
   paymentStatus       String      @default("unpaid")
   subtotalCents       Int
   deliveryFeeCents    Int         @default(0)
+  /** Admin adjustment (cents); can be negative. totalCents = subtotal + delivery + adjustment */
+  adjustmentCents     Int         @default(0)
+  adjustmentLabel     String?
+  /** Kitchen note shown to the customer about custom changes */
+  adminNote           String?
+  adminEditedAt       DateTime?
   totalCents          Int
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt

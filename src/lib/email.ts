@@ -15,8 +15,11 @@ export type OrderEmailPayload = {
   preferredDate: string;
   preferredTimeWindow: string | null;
   notes: string | null;
+  adminNote?: string | null;
   paymentMethod: string;
   subtotalCents: number;
+  adjustmentCents?: number;
+  adjustmentLabel?: string | null;
   totalCents: number;
   /** ISO timestamp when the order was placed */
   createdAt?: string;
@@ -102,12 +105,18 @@ function siteBaseUrl(): string {
 }
 
 function itemsListText(order: OrderEmailPayload): string {
-  return order.items
-    .map(
-      (item) =>
-        `  • ${item.quantity}× ${item.name} (${item.unitLabel}) — ${formatPrice(item.lineTotalCents)}`,
-    )
-    .join("\n");
+  const lines = order.items.map(
+    (item) =>
+      `  • ${item.quantity}× ${item.name} (${item.unitLabel}) — ${formatPrice(item.lineTotalCents)}`,
+  );
+  if (order.adjustmentCents) {
+    const label = order.adjustmentLabel?.trim() || "Adjustment";
+    const sign = order.adjustmentCents > 0 ? "+" : "";
+    lines.push(
+      `  • ${label} — ${sign}${formatPrice(order.adjustmentCents)}`,
+    );
+  }
+  return lines.join("\n");
 }
 
 function fulfillmentText(order: OrderEmailPayload): string {
@@ -265,6 +274,70 @@ export async function sendNewOrderEmails(
   }
 
   return result;
+}
+
+/**
+ * Optional email when kitchen edits an order (items / price / notes).
+ * Safe no-op if SMTP missing or no customer email.
+ */
+export async function sendOrderUpdatedEmail(
+  order: OrderEmailPayload,
+): Promise<{ sent: boolean; skipReason?: string }> {
+  if (!isEmailConfigured()) {
+    return { sent: false, skipReason: "SMTP not configured" };
+  }
+  if (!order.email?.trim()) {
+    return { sent: false, skipReason: "No customer email" };
+  }
+
+  const confirmUrl = customerOrderUrl(order);
+  const placed = formatPlacedAt(order.createdAt);
+  const text = [
+    `Hi ${order.customerName},`,
+    "",
+    `We've updated your order ${order.orderNumber} at ${BUSINESS.name}.`,
+    "",
+    order.adminNote?.trim()
+      ? `Note from the kitchen:\n${order.adminNote.trim()}\n`
+      : null,
+    "Updated items:",
+    itemsListText(order),
+    "",
+    `Amount owed: ${formatPrice(order.totalCents)}`,
+    placed ? `Originally placed: ${placed} (${BUSINESS.timezone})` : null,
+    `Preferred date: ${order.preferredDate}`,
+    "",
+    `View your full order (status, payment QR if needed):\n${confirmUrl}`,
+    "",
+    `Questions? Call or text ${BUSINESS.phone} or email ${BUSINESS.email}.`,
+    "",
+    `With care,`,
+    BUSINESS.name,
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
+
+  try {
+    const transporter = getTransporter();
+    const from = fromHeader();
+    const info = await transporter.sendMail({
+      from,
+      to: order.email.trim(),
+      replyTo: kitchenNotifyTo(),
+      subject: `Your order ${order.orderNumber} was updated — ${BUSINESS.name}`,
+      text,
+    });
+    console.log(
+      `[email] Update OK ${order.orderNumber} to=${order.email} messageId=${info.messageId ?? "?"}`,
+    );
+    return { sent: true };
+  } catch (err) {
+    console.error(
+      `[email] Update FAILED ${order.orderNumber}:`,
+      err instanceof Error ? err.message : err,
+    );
+    return { sent: false, skipReason: "Send failed" };
+  }
 }
 
 export function emailStatusMessage(): string {

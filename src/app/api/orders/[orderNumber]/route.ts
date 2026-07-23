@@ -64,6 +64,10 @@ export async function GET(request: Request, { params }: Params) {
     paymentStatus: order.paymentStatus,
     subtotalCents: order.subtotalCents,
     deliveryFeeCents: order.deliveryFeeCents,
+    adjustmentCents: order.adjustmentCents,
+    adjustmentLabel: order.adjustmentLabel,
+    adminNote: order.adminNote,
+    adminEditedAt: order.adminEditedAt,
     totalCents: order.totalCents,
     createdAt: order.createdAt,
     items: order.items.map((item) => ({
