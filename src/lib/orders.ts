@@ -70,13 +70,19 @@ export function validatePreferredDate(
   preferredDate: string,
   itemIds: string[],
   countsByDate: Record<string, number> = {},
+  blockedDates: Iterable<string> = [],
 ): string | null {
-  return validateFulfillmentDate(preferredDate, itemIds, countsByDate);
+  return validateFulfillmentDate(
+    preferredDate,
+    itemIds,
+    countsByDate,
+    blockedDates,
+  );
 }
 
 /** First available date for cart (no capacity); prefer /api/availability. */
 export function minPreferredDateISO(itemIds: string[]): string {
-  const slots = buildDateSlots(itemIds, {});
+  const slots = buildDateSlots(itemIds, {}, []);
   const first = slots.find((s) => s.available);
   if (first) return first.date;
   const n = nowInBoise();

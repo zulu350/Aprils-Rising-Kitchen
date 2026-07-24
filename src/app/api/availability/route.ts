@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 
 /**
  * GET /api/availability?items=id1,id2
- * Returns allowed fulfillment dates for the cart + capacity.
+ * Returns allowed fulfillment dates for the cart + capacity + kitchen blackouts.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -23,7 +23,6 @@ export async function GET(request: Request) {
   const hasSourdough = cartHasSourdough(itemIds);
   const copy = publicAvailabilityCopy(hasSourdough);
 
-  // Capacity for next ~5 weeks of dates
   const since = new Date();
   since.setDate(since.getDate() - 1);
   const until = new Date();
@@ -33,25 +32,34 @@ export async function GET(request: Request) {
   const untilIso = until.toISOString().slice(0, 10);
 
   let countsByDate: Record<string, number> = {};
+  let blockedDates: string[] = [];
+
   try {
-    const rows = await prisma.order.findMany({
-      where: {
-        preferredDate: { gte: sinceIso, lte: untilIso },
-        status: { not: "cancelled" },
-      },
-      select: { preferredDate: true },
-    });
+    const [rows, blocked] = await Promise.all([
+      prisma.order.findMany({
+        where: {
+          preferredDate: { gte: sinceIso, lte: untilIso },
+          status: { not: "cancelled" },
+        },
+        select: { preferredDate: true },
+      }),
+      prisma.blockedDay.findMany({
+        where: { date: { gte: sinceIso, lte: untilIso } },
+        select: { date: true },
+      }),
+    ]);
     for (const row of rows) {
       countsByDate[row.preferredDate] =
         (countsByDate[row.preferredDate] ?? 0) + 1;
     }
+    blockedDates = blocked.map((b) => b.date);
   } catch (err) {
-    console.error("Availability capacity query failed:", err);
-    // Fail open on capacity only if DB down — schedule rules still apply
+    console.error("Availability capacity/blocked query failed:", err);
     countsByDate = {};
+    blockedDates = [];
   }
 
-  const slots = buildDateSlots(itemIds, countsByDate);
+  const slots = buildDateSlots(itemIds, countsByDate, blockedDates);
   const available = slots.filter((s) => s.available);
 
   return NextResponse.json({

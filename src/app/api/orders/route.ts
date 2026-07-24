@@ -34,16 +34,25 @@ export async function POST(request: Request) {
   const itemIds = lines.map((l) => l.item.id);
 
   try {
-    // Capacity for this fulfillment day (non-cancelled)
-    const dayCount = await prisma.order.count({
-      where: {
-        preferredDate,
-        status: { not: "cancelled" },
-      },
-    });
-    const dateError = validateFulfillmentDate(preferredDate, itemIds, {
-      [preferredDate]: dayCount,
-    });
+    // Capacity + kitchen blackouts for this fulfillment day
+    const [dayCount, blockedRow] = await Promise.all([
+      prisma.order.count({
+        where: {
+          preferredDate,
+          status: { not: "cancelled" },
+        },
+      }),
+      prisma.blockedDay.findUnique({
+        where: { date: preferredDate },
+        select: { date: true },
+      }),
+    ]);
+    const dateError = validateFulfillmentDate(
+      preferredDate,
+      itemIds,
+      { [preferredDate]: dayCount },
+      blockedRow ? [blockedRow.date] : [],
+    );
     if (dateError) {
       return NextResponse.json({ error: dateError }, { status: 400 });
     }

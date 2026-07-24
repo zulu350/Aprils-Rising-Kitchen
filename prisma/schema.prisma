@@ -52,3 +52,11 @@ model OrderItem {
 
   @@index([orderId])
 }
+
+/** Kitchen blocks a calendar day from public checkout (vacation, personal, etc.) */
+model BlockedDay {
+  id        String   @id @default(cuid())
+  date      String   @unique // YYYY-MM-DD
+  note      String?
+  createdAt DateTime @default(now())
+}

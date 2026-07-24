@@ -29,7 +29,19 @@ export function AdminShell({
             </p>
             <h1 className="font-display text-2xl text-espresso">{title}</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-2">
+            <Link
+              href="/admin"
+              className="rounded-full px-3 py-2 text-sm text-muted hover:bg-wheat hover:text-espresso"
+            >
+              Orders
+            </Link>
+            <Link
+              href="/admin/blocked-days"
+              className="rounded-full px-3 py-2 text-sm text-muted hover:bg-wheat hover:text-espresso"
+            >
+              Blocked days
+            </Link>
             <Link
               href="/"
               className="rounded-full px-3 py-2 text-sm text-muted hover:bg-wheat hover:text-espresso"

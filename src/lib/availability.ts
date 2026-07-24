@@ -27,6 +27,8 @@ export const MESSAGING = {
     "Your cart includes sourdough, so this order is available for Wednesday or Friday only (with the same order cutoffs).",
   dayFull:
     "This day is full (our 4-order daily limit). Please choose another available day, or contact us for special requests.",
+  dayBlocked:
+    "This day isn’t available. Please choose another day, or contact us if you need something special.",
   noDates:
     "No open dates match your cart right now. Try removing a loaf, choosing another week, or call/text us — we're happy to help.",
   rollsOnly:
@@ -177,12 +179,15 @@ export function formatDateLabel(iso: string): string {
 /**
  * Build selectable slots for the next HORIZON_WEEKS.
  * `countsByDate`: map of YYYY-MM-DD → non-cancelled order count.
+ * `blockedDates`: set or list of YYYY-MM-DD kitchen blackout days.
  */
 export function buildDateSlots(
   itemIds: string[],
   countsByDate: Record<string, number>,
+  blockedDates: Iterable<string> = [],
   now: Date = nowInBoise(),
 ): DateSlot[] {
+  const blocked = new Set(blockedDates);
   const slots: DateSlot[] = [];
   const start = startOfDay(now);
   const days = HORIZON_WEEKS * 7;
@@ -209,6 +214,16 @@ export function buildDateSlots(
         });
       }
       // Rolls-only: skip unusable weekdays (e.g. today) from the list
+      continue;
+    }
+
+    if (blocked.has(iso)) {
+      slots.push({
+        date: iso,
+        label: formatDateLabel(iso),
+        available: false,
+        reason: MESSAGING.dayBlocked,
+      });
       continue;
     }
 
@@ -242,6 +257,7 @@ export function validateFulfillmentDate(
   preferredDate: string,
   itemIds: string[],
   countsByDate: Record<string, number>,
+  blockedDates: Iterable<string> = [],
   now: Date = nowInBoise(),
 ): string | null {
   const d = parseISODate(preferredDate);
@@ -249,6 +265,11 @@ export function validateFulfillmentDate(
 
   const schedule = isDateAllowedBySchedule(d, itemIds, now);
   if (!schedule.ok) return schedule.reason ?? "That date is not available.";
+
+  const blocked = new Set(blockedDates);
+  if (blocked.has(preferredDate)) {
+    return MESSAGING.dayBlocked;
+  }
 
   const count = countsByDate[preferredDate] ?? 0;
   if (count >= MAX_ORDERS_PER_DAY) {
