@@ -99,7 +99,7 @@ export function MenuClient() {
               Monday 5:00 PM for Wednesday, or Wednesday 5:00 PM for Friday.
             </p>
             <p className="mt-1">
-              Rolls &amp; treats: more flexible (about 24 hours&apos; notice)
+              Rolls &amp; treats: Monday–Friday with about 24 hours&apos; notice
               when ordered without loaves.
             </p>
             <p className="mt-1 text-muted">

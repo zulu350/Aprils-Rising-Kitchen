@@ -30,7 +30,7 @@ export const MESSAGING = {
   noDates:
     "No open dates match your cart right now. Try removing a loaf, choosing another week, or call/text us — we're happy to help.",
   rollsOnly:
-    "Rolls and treats: please allow at least 24 hours' notice. Pickup and delivery 1:00–5:00 PM.",
+    "Rolls and treats: please allow at least 24 hours' notice. Available Monday–Friday, with pickup and delivery 1:00–5:00 PM.",
 } as const;
 
 export type DateSlot = {
@@ -106,8 +106,16 @@ export function isDateAllowedBySchedule(
     };
   }
 
+  // Public fulfillment: Mon–Fri only (no Sat/Sun on the open calendar)
+  const dow = targetDay.getDay(); // 0=Sun … 6=Sat
+  if (dow === 0 || dow === 6) {
+    return {
+      ok: false,
+      reason: "Please choose a weekday (Monday–Friday).",
+    };
+  }
+
   if (hasLoaf) {
-    const dow = targetDay.getDay();
     if (dow !== 3 && dow !== 5) {
       return {
         ok: false,
@@ -144,7 +152,7 @@ export function isDateAllowedBySchedule(
     return { ok: true };
   }
 
-  // Rolls / treats only: at least ~24 hours (next calendar day in Boise)
+  // Rolls / treats only: Mon–Fri, at least ~24 hours (next calendar day in Boise)
   const minDay = startOfDay(now);
   minDay.setDate(minDay.getDate() + 1);
   if (targetDay < minDay) {
@@ -185,19 +193,14 @@ export function buildDateSlots(
     const iso = toISODate(d);
     const schedule = isDateAllowedBySchedule(d, itemIds, now);
     if (!schedule.ok) {
-      // Only list days that could ever be valid for this cart type
-      // (skip past roll-only "today", skip non Wed/Fri for loaf carts entirely)
+      // Never list Saturday/Sunday for public checkout
+      const dow = d.getDay();
+      if (dow === 0 || dow === 6) continue;
+
       const hasLoaf = cartHasSourdough(itemIds);
       if (hasLoaf) {
-        const dow = d.getDay();
+        // Only surface Wed/Fri (e.g. past cutoff) so shoppers see why
         if (dow !== 3 && dow !== 5) continue;
-      } else if (i === 0) {
-        continue; // today never for rolls
-      }
-      // Still show Wed/Fri that missed cutoff so customer understands?
-      // Better: only show available, OR show unavailable with reason.
-      // Show cutoff-missed Wed/Fri as disabled with reason.
-      if (hasLoaf && (d.getDay() === 3 || d.getDay() === 5)) {
         slots.push({
           date: iso,
           label: formatDateLabel(iso),
@@ -205,6 +208,7 @@ export function buildDateSlots(
           reason: schedule.reason,
         });
       }
+      // Rolls-only: skip unusable weekdays (e.g. today) from the list
       continue;
     }
 
