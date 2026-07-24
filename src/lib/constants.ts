@@ -12,4 +12,8 @@ export const BUSINESS = {
     "https://maps.app.goo.gl/TXRajMkuuTqZ6HMQA",
   serviceArea: "Boise & Meridian",
   timezone: "America/Boise",
+  /** Public-facing hours for questions / coordination */
+  publicHours: "Monday–Friday, 1:00–5:00 PM",
+  /** Pickup & delivery window on the chosen day */
+  fulfillmentHours: "1:00–5:00 PM",
 } as const;

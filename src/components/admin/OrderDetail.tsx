@@ -82,6 +82,7 @@ export function OrderDetail({ id }: { id: string }) {
   const [lines, setLines] = useState<LineDraft[]>([]);
   const [notes, setNotes] = useState("");
   const [adminNote, setAdminNote] = useState("");
+  const [preferredDate, setPreferredDate] = useState("");
   const [adjustmentDollars, setAdjustmentDollars] = useState("0.00");
   const [adjustmentLabel, setAdjustmentLabel] = useState("");
   const [notifyCustomer, setNotifyCustomer] = useState(false);
@@ -113,6 +114,7 @@ export function OrderDetail({ id }: { id: string }) {
         );
         setNotes(o.notes || "");
         setAdminNote(o.adminNote || "");
+        setPreferredDate(o.preferredDate || "");
         setAdjustmentDollars(centsToDollarsInput(o.adjustmentCents ?? 0));
         setAdjustmentLabel(o.adjustmentLabel || "");
         setNotifyCustomer(Boolean(o.email));
@@ -194,6 +196,7 @@ export function OrderDetail({ id }: { id: string }) {
           })),
           notes: notes.trim() || null,
           adminNote: adminNote.trim() || null,
+          preferredDate: preferredDate.trim() || undefined,
           adjustmentCents: dollarsToCents(adjustmentDollars),
           adjustmentLabel: adjustmentLabel.trim() || null,
           notifyCustomer: notifyCustomer && Boolean(order.email),
@@ -660,6 +663,17 @@ export function OrderDetail({ id }: { id: string }) {
               </label>
             </div>
 
+            <label className="block text-sm">
+              <span className="font-medium text-brown">
+                Fulfillment date (admin may set any day for specials)
+              </span>
+              <input
+                type="date"
+                value={preferredDate}
+                onChange={(e) => setPreferredDate(e.target.value)}
+                className="mt-1 w-full max-w-xs rounded-xl border border-linen bg-white px-3 py-2.5 text-sm tabular-nums"
+              />
+            </label>
             <label className="block text-sm">
               <span className="font-medium text-brown">
                 Customer request notes

@@ -2,17 +2,24 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   UNIT_LABELS,
   formatPrice,
-  getRequiredLeadTimeHours,
 } from "@/data/menu";
 import { PaymentQrPanel } from "@/components/PaymentQrPanel";
 import { useCart } from "@/lib/cart";
 import { BUSINESS } from "@/lib/constants";
-import { minPreferredDateISO } from "@/lib/orders";
+import type { DateSlot } from "@/lib/availability";
 import type { PaymentMethodPreference } from "@/lib/payment";
+
+type AvailabilityMessaging = {
+  hours: string;
+  fulfillmentWindow: string;
+  schedule: string;
+  special: string;
+  mixed: string | null;
+};
 
 export function CheckoutClient() {
   const router = useRouter();
@@ -21,19 +28,52 @@ export function CheckoutClient() {
   const details = getLineDetails();
   const itemIds = details.map((d) => d.menuItemId);
   const itemIdsKey = itemIds.join(",");
-  const leadHours = getRequiredLeadTimeHours(itemIds);
-  const minDate = useMemo(
-    () => minPreferredDateISO(itemIdsKey ? itemIdsKey.split(",") : []),
-    [itemIdsKey],
-  );
 
   const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">(
     "pickup",
   );
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethodPreference>("undecided");
+  const [preferredDate, setPreferredDate] = useState("");
+  const [slots, setSlots] = useState<DateSlot[]>([]);
+  const [availMsg, setAvailMsg] = useState<AvailabilityMessaging | null>(null);
+  const [loadingDates, setLoadingDates] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!ready || itemIds.length === 0) return;
+    let cancelled = false;
+    setLoadingDates(true);
+    const qs = encodeURIComponent(itemIds.join(","));
+    fetch(`/api/availability?items=${qs}`)
+      .then((r) => r.json())
+      .then(
+        (data: {
+          dates?: DateSlot[];
+          messaging?: AvailabilityMessaging;
+        }) => {
+          if (cancelled) return;
+          const list = data.dates ?? [];
+          setSlots(list);
+          setAvailMsg(data.messaging ?? null);
+          const open = list.filter((s) => s.available);
+          setPreferredDate((prev) => {
+            if (prev && open.some((s) => s.date === prev)) return prev;
+            return open[0]?.date ?? "";
+          });
+        },
+      )
+      .catch(() => {
+        if (!cancelled) setError("Could not load available dates. Please refresh.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDates(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, itemIdsKey]);
 
   if (!ready) {
     return (
@@ -79,7 +119,7 @@ export function CheckoutClient() {
         fulfillment === "delivery"
           ? String(form.get("deliveryAddress") ?? "")
           : undefined,
-      preferredDate: String(form.get("preferredDate") ?? ""),
+      preferredDate,
       preferredTimeWindow: String(form.get("preferredTimeWindow") ?? "") || undefined,
       notes: String(form.get("notes") ?? "") || undefined,
       paymentMethod,
@@ -120,11 +160,19 @@ export function CheckoutClient() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="font-display text-4xl text-espresso">Checkout</h1>
       <p className="mt-2 text-sm text-muted">
-        {leadHours
-          ? `Your order needs at least ${leadHours} hours notice.`
-          : null}{" "}
-        No tax. Pay with cash, Venmo, or Zelle when we confirm.
+        No tax. Pay with cash, Venmo, or Zelle.{" "}
+        {availMsg?.hours}
       </p>
+      {availMsg ? (
+        <div className="mt-4 rounded-2xl bg-wheat px-4 py-3 text-sm leading-relaxed text-brown ring-1 ring-linen">
+          <p>{availMsg.schedule}</p>
+          {availMsg.mixed ? (
+            <p className="mt-2 font-medium text-espresso">{availMsg.mixed}</p>
+          ) : null}
+          <p className="mt-2 text-muted">{availMsg.fulfillmentWindow}</p>
+          <p className="mt-2 text-muted">{availMsg.special}</p>
+        </div>
+      ) : null}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         <form onSubmit={onSubmit} className="space-y-5">
@@ -198,13 +246,15 @@ export function CheckoutClient() {
             </div>
             {fulfillment === "pickup" ? (
               <p className="text-sm text-muted">
-                Pickup during daylight hours at our home kitchen. Address is
-                shared after you place the order.
+                Pickup is between <strong className="font-medium text-espresso">1:00–5:00 PM</strong> on
+                your chosen day. Address is shared after you place the order.
               </p>
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-muted">
-                  Delivery available in {BUSINESS.serviceArea}.
+                  Delivery in {BUSINESS.serviceArea},{" "}
+                  <strong className="font-medium text-espresso">1:00–5:00 PM</strong> on your chosen
+                  day.
                 </p>
                 <label className="block text-sm">
                   <span className="font-medium text-brown">City *</span>
@@ -234,22 +284,57 @@ export function CheckoutClient() {
             )}
             <label className="block text-sm">
               <span className="font-medium text-brown">Preferred date *</span>
-              <input
-                name="preferredDate"
-                type="date"
-                required
-                min={minDate}
-                defaultValue={minDate}
-                className="mt-1 w-full rounded-xl border border-linen bg-cream px-3 py-2.5 outline-none focus:border-crust focus:ring-2 focus:ring-crust/30"
-              />
+              {loadingDates ? (
+                <p className="mt-2 text-sm text-muted">Loading available days…</p>
+              ) : (
+                <select
+                  name="preferredDate"
+                  required
+                  value={preferredDate}
+                  onChange={(e) => setPreferredDate(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-linen bg-cream px-3 py-2.5 outline-none focus:border-crust focus:ring-2 focus:ring-crust/30"
+                >
+                  <option value="" disabled>
+                    Select an available day
+                  </option>
+                  {slots
+                    .filter((s) => s.available)
+                    .map((s) => (
+                      <option key={s.date} value={s.date}>
+                        {s.label}
+                        {s.reason ? ` · ${s.reason}` : ""}
+                      </option>
+                    ))}
+                </select>
+              )}
+              {slots.some((s) => !s.available && s.reason) ? (
+                <ul className="mt-2 space-y-1 text-xs text-muted">
+                  {slots
+                    .filter((s) => !s.available && s.reason)
+                    .slice(0, 4)
+                    .map((s) => (
+                      <li key={s.date}>
+                        {s.label}: {s.reason}
+                      </li>
+                    ))}
+                </ul>
+              ) : null}
+              {!loadingDates &&
+              slots.filter((s) => s.available).length === 0 ? (
+                <p className="mt-2 text-sm text-red-800">
+                  No open dates match this cart right now. Try adjusting items,
+                  or call/text us — we&apos;re happy to help with special
+                  requests.
+                </p>
+              ) : null}
             </label>
             <label className="block text-sm">
               <span className="font-medium text-brown">
-                Preferred time window
+                Preferred time (within 1:00–5:00 PM)
               </span>
               <input
                 name="preferredTimeWindow"
-                placeholder="e.g. afternoon, after 3pm"
+                placeholder="e.g. after 2pm, closer to 4pm"
                 className="mt-1 w-full rounded-xl border border-linen bg-cream px-3 py-2.5 outline-none focus:border-crust focus:ring-2 focus:ring-crust/30"
               />
             </label>

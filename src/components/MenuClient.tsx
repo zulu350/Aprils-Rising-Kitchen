@@ -39,7 +39,9 @@ function MenuItemRow({ item }: { item: MenuItem }) {
           </span>
         </div>
         <p className="mt-1 text-xs text-muted">
-          Pre-order at least {item.leadTimeHours} hours ahead
+          {item.category === "sourdough"
+            ? "Wed & Fri bake days · order by Mon/Wed 5 PM cutoffs"
+            : "About 24 hours' notice (or with loaf schedule if mixed)"}
           {inCart > 0 ? (
             <span className="text-sage-dark"> · {inCart} in cart</span>
           ) : null}
@@ -87,10 +89,24 @@ export function MenuClient() {
             Menu
           </h1>
           <p className="mt-3 max-w-xl text-brown">
-            Everything is baked fresh in small batches. Loaves need 48 hours
-            notice; rolls and treats need 24 hours. Custom requests welcome at
-            checkout.
+            Everything is baked fresh in small batches. We welcome special
+            requests at checkout — leave a note and we&apos;ll do our best.
           </p>
+          <div className="mt-5 rounded-2xl bg-cream/80 px-4 py-3 text-sm leading-relaxed text-brown ring-1 ring-linen">
+            <p className="font-medium text-espresso">Bake days &amp; hours</p>
+            <p className="mt-1">
+              Sourdough loaves: Wednesday &amp; Friday only. Please order by
+              Monday 5:00 PM for Wednesday, or Wednesday 5:00 PM for Friday.
+            </p>
+            <p className="mt-1">
+              Rolls &amp; treats: more flexible (about 24 hours&apos; notice)
+              when ordered without loaves.
+            </p>
+            <p className="mt-1 text-muted">
+              Pickup &amp; delivery 1:00–5:00 PM · Open Monday–Friday for
+              questions and orders.
+            </p>
+          </div>
           <div className="mt-6 flex flex-wrap gap-2">
             {(
               [
@@ -127,13 +143,15 @@ export function MenuClient() {
             </h2>
             {group.category === "sourdough" ? (
               <p className="mb-4 text-sm text-muted">
-                Standard loaf size. Larger or smaller available on request
-                (price may vary).
+                Standard loaf size. Baked for Wednesday &amp; Friday
+                pickup/delivery only (see bake days above). Larger or smaller
+                loaves available on request — prices may vary.
               </p>
             ) : (
               <p className="mb-4 text-sm text-muted">
-                Sold by the dozen. Pandesal, Spanish bread, pan de coco, and
-                more.
+                Sold by the dozen. About 24 hours&apos; notice when ordered
+                without sourdough loaves. Pandesal, Spanish bread, pan de coco,
+                and more.
               </p>
             )}
             <ul className="space-y-3">

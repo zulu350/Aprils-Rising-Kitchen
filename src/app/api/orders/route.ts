@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendNewOrderEmails } from "@/lib/email";
+import { validateFulfillmentDate } from "@/lib/availability";
 import {
   nextOrderNumber,
   validateCreateOrder,
@@ -27,11 +28,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  const { lines, subtotalCents, email } = result;
+  const { lines, subtotalCents, email, preferredDate } = result;
   const deliveryFeeCents = 0;
   const totalCents = subtotalCents + deliveryFeeCents;
+  const itemIds = lines.map((l) => l.item.id);
 
   try {
+    // Capacity for this fulfillment day (non-cancelled)
+    const dayCount = await prisma.order.count({
+      where: {
+        preferredDate,
+        status: { not: "cancelled" },
+      },
+    });
+    const dateError = validateFulfillmentDate(preferredDate, itemIds, {
+      [preferredDate]: dayCount,
+    });
+    if (dateError) {
+      return NextResponse.json({ error: dateError }, { status: 400 });
+    }
+
     const orderNumber = await nextOrderNumber(async () => {
       const rows = await prisma.order.findMany({
         select: { orderNumber: true },
@@ -57,7 +73,7 @@ export async function POST(request: Request) {
           body.fulfillment === "delivery"
             ? body.deliveryAddress?.trim() ?? null
             : null,
-        preferredDate: body.preferredDate.trim(),
+        preferredDate,
         preferredTimeWindow: body.preferredTimeWindow?.trim() || null,
         notes: body.notes?.trim() || null,
         status: "new",

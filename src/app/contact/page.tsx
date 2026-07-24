@@ -53,8 +53,9 @@ export default function ContactPage() {
           </a>
         </li>
         <li className="pt-2 text-sm text-muted">
-          Delivery available in {BUSINESS.serviceArea}. Pickup during daylight
-          hours by arrangement. Cash, Venmo, or Zelle accepted.
+          {BUSINESS.publicHours}. Pickup &amp; delivery{" "}
+          {BUSINESS.fulfillmentHours} in {BUSINESS.serviceArea}. Cash, Venmo,
+          or Zelle accepted.
         </li>
       </ul>
     </div>

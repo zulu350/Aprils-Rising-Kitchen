@@ -86,6 +86,9 @@ export function Footer() {
             <li className="pt-2 text-muted">
               Delivery in {BUSINESS.serviceArea}
             </li>
+            <li className="text-muted">
+              Mon–Fri · 1:00–5:00 PM · pickup &amp; delivery
+            </li>
             <li className="text-muted">Cash · Venmo · Zelle</li>
             <li className="pt-3">
               <ReviewInvite variant="footer" />

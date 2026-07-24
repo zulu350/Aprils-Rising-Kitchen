@@ -131,12 +131,12 @@ export default function HomePage() {
               {
                 step: "2",
                 title: "Pick a date",
-                body: "Loaves need 48 hours notice; rolls need 24 hours. We bake on your schedule.",
+                body: "Sourdough for Wednesday & Friday (order by Mon/Wed 5 PM). Rolls are more flexible alone. We bake with care for your day.",
               },
               {
                 step: "3",
                 title: "Pickup or delivery",
-                body: `Pickup during daylight hours, or delivery in ${BUSINESS.serviceArea}. Pay with cash, Venmo, or Zelle.`,
+                body: `Between 1:00–5:00 PM in ${BUSINESS.serviceArea}. Pay with cash, Venmo, or Zelle.`,
               },
             ].map((item) => (
               <li

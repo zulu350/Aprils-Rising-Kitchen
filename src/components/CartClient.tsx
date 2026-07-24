@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { UNIT_LABELS, formatPrice, getRequiredLeadTimeHours } from "@/data/menu";
+import { UNIT_LABELS, formatPrice, getMenuItem } from "@/data/menu";
 import { useCart } from "@/lib/cart";
+import { MESSAGING } from "@/lib/availability";
 
 export function CartClient() {
   const {
@@ -24,8 +25,8 @@ export function CartClient() {
   }
 
   const details = getLineDetails();
-  const leadHours = getRequiredLeadTimeHours(
-    details.map((d) => d.menuItemId),
+  const hasSourdough = details.some(
+    (d) => getMenuItem(d.menuItemId)?.category === "sourdough",
   );
 
   if (itemCount === 0) {
@@ -51,10 +52,8 @@ export function CartClient() {
         <div>
           <h1 className="font-display text-4xl text-espresso">Your cart</h1>
           <p className="mt-2 text-sm text-muted">
-            {itemCount} item{itemCount === 1 ? "" : "s"}
-            {leadHours
-              ? ` · allow at least ${leadHours} hours before pickup/delivery`
-              : null}
+            {itemCount} item{itemCount === 1 ? "" : "s"} · pickup/delivery
+            1:00–5:00 PM
           </p>
         </div>
         <button
@@ -64,6 +63,18 @@ export function CartClient() {
         >
           Clear cart
         </button>
+      </div>
+
+      <div className="mt-6 rounded-2xl bg-wheat px-4 py-3 text-sm leading-relaxed text-brown ring-1 ring-linen">
+        {hasSourdough ? (
+          <>
+            <p className="font-medium text-espresso">{MESSAGING.mixedCart}</p>
+            <p className="mt-1 text-muted">{MESSAGING.sourdough}</p>
+          </>
+        ) : (
+          <p>{MESSAGING.rollsOnly}</p>
+        )}
+        <p className="mt-1 text-muted">{MESSAGING.fulfillmentWindow}</p>
       </div>
 
       <ul className="mt-8 space-y-3">

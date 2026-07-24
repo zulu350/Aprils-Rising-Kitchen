@@ -5,7 +5,12 @@ import {
   UNIT_LABELS,
   type MenuItem,
 } from "@/data/menu";
-import { BUSINESS } from "@/lib/constants";
+import {
+  buildDateSlots,
+  nowInBoise,
+  toISODate,
+  validateFulfillmentDate,
+} from "@/lib/availability";
 
 export type CartLineInput = {
   menuItemId: string;
@@ -60,51 +65,23 @@ export function resolveOrderLines(items: CartLineInput[]): {
   return { lines };
 }
 
-/** Preferred date is YYYY-MM-DD in America/Boise calendar. */
+/** Preferred date validation (schedule + optional capacity map). */
 export function validatePreferredDate(
   preferredDate: string,
   itemIds: string[],
+  countsByDate: Record<string, number> = {},
 ): string | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(preferredDate)) {
-    return "Please choose a valid preferred date.";
-  }
-
-  const leadHours = getRequiredLeadTimeHours(itemIds);
-  if (!leadHours) return "Could not determine lead time for your items.";
-
-  const nowBoise = new Date(
-    new Date().toLocaleString("en-US", { timeZone: BUSINESS.timezone }),
-  );
-  const minDate = new Date(nowBoise);
-  minDate.setHours(0, 0, 0, 0);
-  // Need full calendar days of lead: 24h => tomorrow earliest, 48h => day after tomorrow
-  const leadDays = Math.ceil(leadHours / 24);
-  minDate.setDate(minDate.getDate() + leadDays);
-
-  const [y, m, d] = preferredDate.split("-").map(Number);
-  const preferred = new Date(y, m - 1, d);
-  preferred.setHours(0, 0, 0, 0);
-
-  if (preferred < minDate) {
-    const minStr = minDate.toISOString().slice(0, 10);
-    return `Please choose a date on or after ${minStr} (at least ${leadHours} hours notice for your items).`;
-  }
-
-  return null;
+  return validateFulfillmentDate(preferredDate, itemIds, countsByDate);
 }
 
+/** First available date for cart (no capacity); prefer /api/availability. */
 export function minPreferredDateISO(itemIds: string[]): string {
-  const leadHours = getRequiredLeadTimeHours(itemIds) || 24;
-  const leadDays = Math.ceil(leadHours / 24);
-  const nowBoise = new Date(
-    new Date().toLocaleString("en-US", { timeZone: BUSINESS.timezone }),
-  );
-  nowBoise.setHours(0, 0, 0, 0);
-  nowBoise.setDate(nowBoise.getDate() + leadDays);
-  const y = nowBoise.getFullYear();
-  const m = String(nowBoise.getMonth() + 1).padStart(2, "0");
-  const d = String(nowBoise.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  const slots = buildDateSlots(itemIds, {});
+  const first = slots.find((s) => s.available);
+  if (first) return first.date;
+  const n = nowInBoise();
+  n.setDate(n.getDate() + 1);
+  return toISODate(n);
 }
 
 export function validateCreateOrder(
@@ -115,6 +92,7 @@ export function validateCreateOrder(
       lines: ResolvedLine[];
       subtotalCents: number;
       email: string;
+      preferredDate: string;
     }
   | { ok: false; error: string } {
   const name = body.customerName?.trim() ?? "";
@@ -132,6 +110,9 @@ export function validateCreateOrder(
   }
   if (phone.length < 7) return { ok: false, error: "Please enter a phone number." };
   const email = emailRaw ? emailRaw.toLowerCase() : "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(preferredDate)) {
+    return { ok: false, error: "Please choose a preferred pickup or delivery date." };
+  }
 
   if (body.fulfillment !== "pickup" && body.fulfillment !== "delivery") {
     return { ok: false, error: "Choose pickup or delivery." };
@@ -153,11 +134,7 @@ export function validateCreateOrder(
   const { lines, error } = resolveOrderLines(body.items ?? []);
   if (error) return { ok: false, error };
 
-  const dateError = validatePreferredDate(
-    preferredDate,
-    lines.map((l) => l.item.id),
-  );
-  if (dateError) return { ok: false, error: dateError };
+  // Date + capacity validated in API after DB count (see create order route)
 
   const method = body.paymentMethod ?? "undecided";
   if (!["cash", "venmo", "zelle", "undecided"].includes(method)) {
@@ -165,7 +142,7 @@ export function validateCreateOrder(
   }
 
   const subtotalCents = lines.reduce((s, l) => s + l.lineTotalCents, 0);
-  return { ok: true, lines, subtotalCents, email };
+  return { ok: true, lines, subtotalCents, email, preferredDate };
 }
 
 /**

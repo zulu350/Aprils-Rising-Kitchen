@@ -26,6 +26,8 @@ type PatchBody = {
   items?: EditItemInput[];
   notes?: string | null;
   adminNote?: string | null;
+  /** Admin may set any date for special requests (not bound by public bake days) */
+  preferredDate?: string | null;
   adjustmentCents?: number;
   adjustmentLabel?: string | null;
   /** If true and customer has email, send update email after save */
@@ -137,6 +139,19 @@ export async function PATCH(request: Request, { params }: Params) {
   if (body.adminNote !== undefined) {
     data.adminNote = body.adminNote?.trim() || null;
     contentEdit = true;
+  }
+  if (body.preferredDate !== undefined) {
+    const pd = body.preferredDate?.trim() || "";
+    if (pd && !/^\d{4}-\d{2}-\d{2}$/.test(pd)) {
+      return NextResponse.json(
+        { error: "Preferred date must be YYYY-MM-DD." },
+        { status: 400 },
+      );
+    }
+    if (pd) {
+      data.preferredDate = pd;
+      contentEdit = true;
+    }
   }
   if (body.adjustmentLabel !== undefined) {
     data.adjustmentLabel = body.adjustmentLabel?.trim() || null;
