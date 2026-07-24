@@ -307,11 +307,12 @@ export function CheckoutClient() {
                     ))}
                 </select>
               )}
+              {/* Full days / past cutoffs only — blocked kitchen days are omitted from slots */}
               {slots.some((s) => !s.available && s.reason) ? (
                 <ul className="mt-2 space-y-1 text-xs text-muted">
                   {slots
                     .filter((s) => !s.available && s.reason)
-                    .slice(0, 4)
+                    .slice(0, 3)
                     .map((s) => (
                       <li key={s.date}>
                         {s.label}: {s.reason}

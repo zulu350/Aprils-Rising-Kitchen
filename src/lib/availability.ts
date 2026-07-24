@@ -217,15 +217,8 @@ export function buildDateSlots(
       continue;
     }
 
-    if (blocked.has(iso)) {
-      slots.push({
-        date: iso,
-        label: formatDateLabel(iso),
-        available: false,
-        reason: MESSAGING.dayBlocked,
-      });
-      continue;
-    }
+    // Kitchen blackouts: omit entirely (no spammy per-day messages at checkout)
+    if (blocked.has(iso)) continue;
 
     const count = countsByDate[iso] ?? 0;
     if (count >= MAX_ORDERS_PER_DAY) {
