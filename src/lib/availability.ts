@@ -29,6 +29,9 @@ export const MESSAGING = {
     "This day is full (our 4-order daily limit). Please choose another available day, or contact us for special requests.",
   dayBlocked:
     "This day isn’t available. Please choose another day, or contact us if you need something special.",
+  /** Short helper under the preferred-date dropdown (blocked/full/cutoff days are omitted) */
+  dateListHint:
+    "Only days we can fulfill are listed. Days that are closed, full, or past the order cutoff won’t appear — leave a note if you need something special.",
   noDates:
     "No open dates match your cart right now. Try removing a loaf, choosing another week, or call/text us — we're happy to help.",
   rollsOnly:

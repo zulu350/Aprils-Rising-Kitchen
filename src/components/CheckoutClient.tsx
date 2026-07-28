@@ -10,7 +10,7 @@ import {
 import { PaymentQrPanel } from "@/components/PaymentQrPanel";
 import { useCart } from "@/lib/cart";
 import { BUSINESS } from "@/lib/constants";
-import type { DateSlot } from "@/lib/availability";
+import { MESSAGING, type DateSlot } from "@/lib/availability";
 import type { PaymentMethodPreference } from "@/lib/payment";
 
 type AvailabilityMessaging = {
@@ -307,6 +307,12 @@ export function CheckoutClient() {
                     ))}
                 </select>
               )}
+              {!loadingDates &&
+              slots.filter((s) => s.available).length > 0 ? (
+                <p className="mt-2 text-xs leading-relaxed text-muted">
+                  {MESSAGING.dateListHint}
+                </p>
+              ) : null}
               {/* Full days / past cutoffs only — blocked kitchen days are omitted from slots */}
               {slots.some((s) => !s.available && s.reason) ? (
                 <ul className="mt-2 space-y-1 text-xs text-muted">
