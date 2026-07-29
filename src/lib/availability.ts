@@ -223,25 +223,14 @@ export function buildDateSlots(
     // Kitchen blackouts: omit entirely (no spammy per-day messages at checkout)
     if (blocked.has(iso)) continue;
 
+    // Full days: omit from public list (capacity enforced on order POST)
     const count = countsByDate[iso] ?? 0;
-    if (count >= MAX_ORDERS_PER_DAY) {
-      slots.push({
-        date: iso,
-        label: formatDateLabel(iso),
-        available: false,
-        reason: MESSAGING.dayFull,
-      });
-      continue;
-    }
+    if (count >= MAX_ORDERS_PER_DAY) continue;
 
     slots.push({
       date: iso,
       label: formatDateLabel(iso),
       available: true,
-      reason:
-        count > 0
-          ? `${count} of ${MAX_ORDERS_PER_DAY} orders booked`
-          : undefined,
     });
   }
 

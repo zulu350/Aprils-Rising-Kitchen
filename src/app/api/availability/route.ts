@@ -67,6 +67,5 @@ export async function GET(request: Request) {
     messaging: copy,
     dates: slots,
     availableDates: available.map((s) => s.date),
-    maxOrdersPerDay: 4,
   });
 }
