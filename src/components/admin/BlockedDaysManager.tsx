@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDateLabel } from "@/lib/availability";
 
 type BlockedDay = {
@@ -10,6 +10,8 @@ type BlockedDay = {
   createdAt: string;
 };
 
+type SortOrder = "asc" | "desc";
+
 export function BlockedDaysManager() {
   const [days, setDays] = useState<BlockedDay[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,7 @@ export function BlockedDaysManager() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
   const load = useCallback(async () => {
     setError(null);
@@ -108,6 +111,16 @@ export function BlockedDaysManager() {
 
   const today = new Date().toISOString().slice(0, 10);
 
+  const sortedDays = useMemo(() => {
+    const list = [...days];
+    list.sort((a, b) =>
+      sortOrder === "asc"
+        ? a.date.localeCompare(b.date)
+        : b.date.localeCompare(a.date),
+    );
+    return list;
+  }, [days, sortOrder]);
+
   return (
     <div className="space-y-8">
       <p className="max-w-2xl text-sm text-muted">
@@ -164,14 +177,29 @@ export function BlockedDaysManager() {
       )}
 
       <section>
-        <h2 className="font-display text-lg text-espresso">
-          Blocked days
-          {!loading && (
-            <span className="ml-2 text-sm font-sans font-normal text-muted">
-              ({days.length})
-            </span>
-          )}
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg text-espresso">
+            Blocked days
+            {!loading && (
+              <span className="ml-2 text-sm font-sans font-normal text-muted">
+                ({days.length})
+              </span>
+            )}
+          </h2>
+          {!loading && days.length > 1 ? (
+            <label className="flex items-center gap-2 text-sm text-espresso">
+              <span className="text-muted">Sort</span>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                className="rounded-xl border border-linen bg-white px-3 py-1.5 text-sm text-espresso"
+              >
+                <option value="asc">Soonest first</option>
+                <option value="desc">Farthest first</option>
+              </select>
+            </label>
+          ) : null}
+        </div>
 
         {loading ? (
           <p className="mt-4 text-sm text-muted">Loading…</p>
@@ -181,7 +209,7 @@ export function BlockedDaysManager() {
           </p>
         ) : (
           <ul className="mt-4 divide-y divide-linen rounded-2xl border border-linen bg-white">
-            {days.map((d) => (
+            {sortedDays.map((d) => (
               <li
                 key={d.id}
                 className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"

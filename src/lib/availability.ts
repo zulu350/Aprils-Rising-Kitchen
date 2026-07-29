@@ -35,7 +35,7 @@ export const MESSAGING = {
   noDates:
     "No open dates match your cart right now. Try removing a loaf, choosing another week, or call/text us — we're happy to help.",
   rollsOnly:
-    "Rolls and treats: please allow at least 24 hours' notice. Available Monday–Friday, with pickup and delivery 1:00–5:00 PM.",
+    "Rolls and treats: please allow at least 24 hours' notice. Available Monday–Friday.",
 } as const;
 
 export type DateSlot = {
