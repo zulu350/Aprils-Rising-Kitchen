@@ -9,6 +9,7 @@ import {
   formatMoney,
   type OrderStatus,
 } from "@/lib/admin-orders";
+import { formatDateLabel } from "@/lib/availability";
 
 type OrderRow = {
   id: string;
@@ -238,15 +239,19 @@ export function OrderBoard() {
                         </span>
                       )}
                     </div>
+                    <p className="mt-2 font-display text-xl leading-snug text-espresso sm:text-2xl">
+                      {formatDateLabel(order.preferredDate)}
+                      <span className="ml-2 text-base font-sans font-medium capitalize text-brown sm:text-lg">
+                        · {order.fulfillment}
+                      </span>
+                    </p>
                     <p className="mt-1 text-sm text-brown">
                       {order.customerName} · {order.phone}
                     </p>
                     <p className="mt-1 text-xs text-muted">
-                      For {order.preferredDate} · {order.fulfillment}
                       {order.createdAt
-                        ? ` · Placed ${formatPlaced(order.createdAt)}`
+                        ? `Placed ${formatPlaced(order.createdAt)} · `
                         : ""}
-                      {" · "}
                       {order.items
                         .map((i) => `${i.quantity}× ${i.name}`)
                         .join(", ")}
