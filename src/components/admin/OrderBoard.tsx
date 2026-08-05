@@ -239,9 +239,9 @@ export function OrderBoard() {
                         </span>
                       )}
                     </div>
-                    <p className="mt-2 font-display text-xl leading-snug text-espresso sm:text-2xl">
+                    <p className="mt-2 text-xl font-semibold leading-snug tracking-tight text-espresso sm:text-2xl">
                       {formatDateLabel(order.preferredDate)}
-                      <span className="ml-2 text-base font-sans font-medium capitalize text-brown sm:text-lg">
+                      <span className="ml-2 text-base font-medium capitalize text-brown sm:text-lg">
                         · {order.fulfillment}
                       </span>
                     </p>
