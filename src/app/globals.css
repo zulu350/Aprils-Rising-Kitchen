@@ -55,6 +55,13 @@ a {
   color: inherit;
 }
 
+/* Link-styled solid buttons: inherit would keep brown text on dark fills */
+a.bg-espresso,
+a.bg-crust-dark,
+a.bg-sage-dark {
+  color: #fff;
+}
+
 ::selection {
   background: color-mix(in srgb, var(--crust) 35%, transparent);
 }
