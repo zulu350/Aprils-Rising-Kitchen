@@ -151,6 +151,85 @@ export function validateCreateOrder(
   return { ok: true, lines, subtotalCents, email, preferredDate };
 }
 
+export type AdminCreateOrderInput = CreateOrderInput & {
+  paymentStatus?: "paid" | "unpaid";
+};
+
+/**
+ * Kitchen-created orders (Facebook, walk-in, phone).
+ * Same line/item rules as public checkout, but any fulfillment date is allowed
+ * and phone/email may be omitted.
+ */
+export function validateAdminCreateOrder(
+  body: AdminCreateOrderInput,
+):
+  | {
+      ok: true;
+      lines: ResolvedLine[];
+      subtotalCents: number;
+      email: string;
+      preferredDate: string;
+      phone: string;
+      paymentStatus: "paid" | "unpaid";
+    }
+  | { ok: false; error: string } {
+  const name = body.customerName?.trim() ?? "";
+  const emailRaw = body.email?.trim() ?? "";
+  const phone = body.phone?.trim() || "—";
+  const preferredDate = body.preferredDate?.trim() ?? "";
+
+  if (name.length < 2) return { ok: false, error: "Please enter a customer name." };
+  if (emailRaw && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw)) {
+    return {
+      ok: false,
+      error: "Please enter a valid email, or leave it blank.",
+    };
+  }
+  const email = emailRaw ? emailRaw.toLowerCase() : "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(preferredDate)) {
+    return { ok: false, error: "Please choose a pickup or delivery date." };
+  }
+
+  if (body.fulfillment !== "pickup" && body.fulfillment !== "delivery") {
+    return { ok: false, error: "Choose pickup or delivery." };
+  }
+
+  if (body.fulfillment === "delivery") {
+    const city = body.deliveryCity?.trim() ?? "";
+    if (city && city !== "Boise" && city !== "Meridian") {
+      return {
+        ok: false,
+        error: "Delivery city should be Boise or Meridian.",
+      };
+    }
+    if (!(body.deliveryAddress?.trim().length)) {
+      return { ok: false, error: "Please enter a delivery address." };
+    }
+  }
+
+  const { lines, error } = resolveOrderLines(body.items ?? []);
+  if (error) return { ok: false, error };
+
+  const method = body.paymentMethod ?? "undecided";
+  if (!["cash", "venmo", "zelle", "undecided"].includes(method)) {
+    return { ok: false, error: "Invalid payment preference." };
+  }
+
+  const paymentStatus =
+    body.paymentStatus === "paid" ? "paid" : "unpaid";
+
+  const subtotalCents = lines.reduce((s, l) => s + l.lineTotalCents, 0);
+  return {
+    ok: true,
+    lines,
+    subtotalCents,
+    email,
+    preferredDate,
+    phone,
+    paymentStatus,
+  };
+}
+
 /**
  * Next order number based on the highest existing ARK-####, not row count.
  * Using count() breaks after deletes (e.g. 5 rows left → reuses ARK-1006).

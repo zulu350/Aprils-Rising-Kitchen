@@ -336,6 +336,12 @@ export function OrderDetail({ id }: { id: string }) {
           ))}
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href={`/admin/orders/${order.id}/receipt`}
+            className="rounded-full bg-espresso px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            Print receipt
+          </Link>
           <button
             type="button"
             disabled={saving || order.paymentStatus === "paid"}

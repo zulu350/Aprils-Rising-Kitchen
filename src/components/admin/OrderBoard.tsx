@@ -167,13 +167,21 @@ export function OrderBoard() {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="rounded-full bg-crust-dark px-4 py-2 text-sm font-semibold text-white"
-        >
-          Refresh
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/orders/new"
+            className="rounded-full bg-espresso px-4 py-2 text-sm font-semibold text-white"
+          >
+            New order
+          </Link>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="rounded-full bg-crust-dark px-4 py-2 text-sm font-semibold text-white"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-2">

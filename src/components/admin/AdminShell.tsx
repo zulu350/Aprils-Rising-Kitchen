@@ -37,6 +37,12 @@ export function AdminShell({
               Orders
             </Link>
             <Link
+              href="/admin/orders/new"
+              className="rounded-full px-3 py-2 text-sm text-muted hover:bg-wheat hover:text-espresso"
+            >
+              New order
+            </Link>
+            <Link
               href="/admin/blocked-days"
               className="rounded-full px-3 py-2 text-sm text-muted hover:bg-wheat hover:text-espresso"
             >
