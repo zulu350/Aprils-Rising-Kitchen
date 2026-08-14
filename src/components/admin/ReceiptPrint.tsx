@@ -105,9 +105,7 @@ export function ReceiptPrint({
             </p>
           </div>
           <div className="text-right text-sm">
-            <p className="font-medium">
-              {paid ? "PAID" : "BALANCE DUE"}
-            </p>
+            {paid ? <p className="font-medium">PAID</p> : null}
             <p className="text-stone-600">Placed {formatPlaced(order.createdAt)}</p>
           </div>
         </div>
@@ -202,7 +200,7 @@ export function ReceiptPrint({
             <span>Payment</span>
             <span>
               {PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}
-              {paid ? " · Paid" : " · Unpaid"}
+              {paid ? " · Paid" : ""}
             </span>
           </div>
         </div>
