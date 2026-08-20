@@ -11,6 +11,8 @@ import {
   type OrderStatus,
   type PaymentStatus,
 } from "@/lib/admin-orders";
+import { formatDateLabel } from "@/lib/availability";
+import { BUSINESS } from "@/lib/constants";
 
 type LineDraft = {
   key: string;
@@ -382,7 +384,9 @@ export function OrderDetail({ id }: { id: string }) {
           <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">
             Schedule
           </h3>
-          <p className="mt-1 tabular-nums text-espresso">{order.preferredDate}</p>
+          <p className="mt-1 text-espresso">
+            {formatDateLabel(order.preferredDate)}
+          </p>
           {order.preferredTimeWindow ? (
             <p className="text-sm text-muted">{order.preferredTimeWindow}</p>
           ) : null}
@@ -408,7 +412,11 @@ export function OrderDetail({ id }: { id: string }) {
             Placed
           </h3>
           <p className="mt-1 text-sm text-muted">
-            {new Date(order.createdAt).toLocaleString()}
+            {new Date(order.createdAt).toLocaleString("en-US", {
+              timeZone: BUSINESS.timezone,
+              dateStyle: "short",
+              timeStyle: "short",
+            })}
           </p>
         </div>
         {order.accessToken ? (

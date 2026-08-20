@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import { formatPrice } from "@/data/menu";
-import { parseISODate } from "@/lib/availability";
+import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
 
 export type OrderEmailPayload = {
@@ -48,18 +48,6 @@ function formatPlacedAt(iso?: string): string {
   } catch {
     return iso;
   }
-}
-
-/** YYYY-MM-DD → U.S. weekday + M/D/YYYY (local calendar date, no TZ shift). */
-function formatPreferredDate(iso: string): string {
-  const d = parseISODate(iso);
-  if (!d) return iso;
-  return d.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 export function isEmailConfigured(): boolean {
@@ -154,7 +142,7 @@ function buildKitchenText(order: OrderEmailPayload): string {
       ? `Placed: ${formatPlacedAt(order.createdAt)} (${BUSINESS.timezone})`
       : null,
     "",
-    `Preferred date: ${formatPreferredDate(order.preferredDate)}`,
+    `Preferred date: ${formatDateLabel(order.preferredDate)}`,
     order.preferredTimeWindow
       ? `Time window: ${order.preferredTimeWindow}`
       : null,
@@ -189,7 +177,7 @@ function buildCustomerText(order: OrderEmailPayload): string {
     "",
     `Order number: ${order.orderNumber}`,
     placed ? `Order placed: ${placed} (${BUSINESS.timezone})` : null,
-    `Preferred date: ${formatPreferredDate(order.preferredDate)}`,
+    `Preferred date: ${formatDateLabel(order.preferredDate)}`,
     order.preferredTimeWindow
       ? `Time window: ${order.preferredTimeWindow}`
       : null,
@@ -318,7 +306,7 @@ export async function sendOrderUpdatedEmail(
     "",
     `Amount owed: ${formatPrice(order.totalCents)}`,
     placed ? `Originally placed: ${placed} (${BUSINESS.timezone})` : null,
-    `Preferred date: ${formatPreferredDate(order.preferredDate)}`,
+    `Preferred date: ${formatDateLabel(order.preferredDate)}`,
     "",
     `View your full order (status, payment QR if needed):\n${confirmUrl}`,
     "",

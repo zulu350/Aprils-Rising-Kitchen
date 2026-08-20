@@ -11,6 +11,7 @@ import {
   isOrderStatus,
   type OrderStatus,
 } from "@/lib/admin-orders";
+import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
 
 
@@ -197,7 +198,9 @@ export function OrderConfirmation({
             <p className="text-xs font-semibold tracking-wide text-muted uppercase">
               Preferred date
             </p>
-            <p className="text-espresso tabular-nums">{order.preferredDate}</p>
+            <p className="text-espresso">
+              {formatDateLabel(order.preferredDate)}
+            </p>
             {order.preferredTimeWindow ? (
               <p className="text-muted">{order.preferredTimeWindow}</p>
             ) : null}

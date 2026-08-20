@@ -169,13 +169,15 @@ export function isDateAllowedBySchedule(
   return { ok: true };
 }
 
+/** YYYY-MM-DD → U.S. weekday + M/D/YYYY (calendar date, no timezone shift). */
 export function formatDateLabel(iso: string): string {
   const d = parseISODate(iso);
   if (!d) return iso;
   return d.toLocaleDateString("en-US", {
     weekday: "long",
-    month: "short",
+    month: "numeric",
     day: "numeric",
+    year: "numeric",
   });
 }
 

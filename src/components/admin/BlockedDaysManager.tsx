@@ -218,7 +218,6 @@ export function BlockedDaysManager() {
                   <p className="font-medium text-espresso">
                     {formatDateLabel(d.date)}
                   </p>
-                  <p className="text-xs text-muted">{d.date}</p>
                   {d.note && (
                     <p className="mt-1 text-sm text-muted">{d.note}</p>
                   )}
