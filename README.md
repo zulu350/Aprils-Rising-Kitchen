@@ -126,7 +126,7 @@ public/images/         # Brand photos + logo
 ## Brand & contact (app defaults)
 
 - **Business:** April's Rising Kitchen · Boise, Idaho  
-- **Phone / text:** 360-383-7464  
+- **Phone / text:** 208-352-2634  
 - **Email:** info@aprilsrisingkitchen.com  
 - **Site reference:** [aprilsrisingkitchen.com](https://aprilsrisingkitchen.com)
 
