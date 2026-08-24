@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { formatDateLabel } from "@/lib/availability";
+import { formatDateLabel, nowInBoise, toISODate } from "@/lib/availability";
 
 type BlockedDay = {
   id: string;
@@ -11,6 +11,7 @@ type BlockedDay = {
 };
 
 type SortOrder = "asc" | "desc";
+type ViewFilter = "upcoming" | "past" | "all";
 
 export function BlockedDaysManager() {
   const [days, setDays] = useState<BlockedDay[]>([]);
@@ -21,6 +22,7 @@ export function BlockedDaysManager() {
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [view, setView] = useState<ViewFilter>("upcoming");
 
   const load = useCallback(async () => {
     setError(null);
@@ -109,17 +111,28 @@ export function BlockedDaysManager() {
     }
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = toISODate(nowInBoise());
 
-  const sortedDays = useMemo(() => {
-    const list = [...days];
+  const upcomingDays = useMemo(
+    () => days.filter((d) => d.date >= today),
+    [days, today],
+  );
+  const pastDays = useMemo(
+    () => days.filter((d) => d.date < today),
+    [days, today],
+  );
+
+  const visibleDays = useMemo(() => {
+    const source =
+      view === "upcoming" ? upcomingDays : view === "past" ? pastDays : days;
+    const list = [...source];
     list.sort((a, b) =>
       sortOrder === "asc"
         ? a.date.localeCompare(b.date)
         : b.date.localeCompare(a.date),
     );
     return list;
-  }, [days, sortOrder]);
+  }, [view, upcomingDays, pastDays, days, sortOrder]);
 
   return (
     <div className="space-y-8">
@@ -182,11 +195,15 @@ export function BlockedDaysManager() {
             Blocked days
             {!loading && (
               <span className="ml-2 text-sm font-sans font-normal text-muted">
-                ({days.length})
+                ({visibleDays.length}
+                {view !== "all" && days.length !== visibleDays.length
+                  ? ` of ${days.length}`
+                  : ""}
+                )
               </span>
             )}
           </h2>
-          {!loading && days.length > 1 ? (
+          {!loading && visibleDays.length > 1 ? (
             <label className="flex items-center gap-2 text-sm text-espresso">
               <span className="text-muted">Sort</span>
               <select
@@ -201,15 +218,47 @@ export function BlockedDaysManager() {
           ) : null}
         </div>
 
+        {!loading && days.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(
+              [
+                { value: "upcoming", label: "Upcoming", count: upcomingDays.length },
+                { value: "past", label: "Past", count: pastDays.length },
+                { value: "all", label: "All", count: days.length },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setView(opt.value)}
+                className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
+                  view === opt.value
+                    ? "bg-espresso text-white"
+                    : "bg-cream text-brown ring-1 ring-linen"
+                }`}
+              >
+                {opt.label}
+                <span className="ml-1 font-normal opacity-80">({opt.count})</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {loading ? (
           <p className="mt-4 text-sm text-muted">Loading…</p>
         ) : days.length === 0 ? (
           <p className="mt-4 rounded-2xl border border-dashed border-linen bg-white/60 px-4 py-8 text-center text-sm text-muted">
             No blocked days yet. The public schedule runs as usual.
           </p>
+        ) : visibleDays.length === 0 ? (
+          <p className="mt-4 rounded-2xl border border-dashed border-linen bg-white/60 px-4 py-8 text-center text-sm text-muted">
+            {view === "upcoming"
+              ? "No upcoming blocked days. Past dates are under Past."
+              : "No past blocked days."}
+          </p>
         ) : (
           <ul className="mt-4 divide-y divide-linen rounded-2xl border border-linen bg-white">
-            {sortedDays.map((d) => (
+            {visibleDays.map((d) => (
               <li
                 key={d.id}
                 className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
