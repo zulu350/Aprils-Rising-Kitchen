@@ -87,7 +87,7 @@ export function ReceiptPrint({
       </div>
 
       <article className="receipt mx-auto mb-10 max-w-xl bg-white px-8 py-8 text-black shadow-sm ring-1 ring-linen print:mb-0 print:max-w-none print:px-0 print:py-0 print:shadow-none print:ring-0">
-        <header className="border-b border-stone-300 pb-4 text-center">
+        <header className="border-b border-stone-300 pb-3 text-center">
           <p className="font-display text-3xl text-espresso">{BUSINESS.name}</p>
           <p className="mt-1 text-sm text-stone-600">{BUSINESS.tagline}</p>
           <p className="mt-1 text-sm text-stone-600">
@@ -95,13 +95,10 @@ export function ReceiptPrint({
           </p>
         </header>
 
-        <div className="mt-5 flex items-start justify-between gap-4">
+        <div className="mt-4 flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold tracking-wide text-stone-500 uppercase">
-              Receipt
-            </p>
-            <p className="text-xl font-semibold tabular-nums">
-              {order.orderNumber}
+              Receipt {order.orderNumber}
             </p>
           </div>
           <div className="text-right text-sm">
@@ -142,7 +139,7 @@ export function ReceiptPrint({
           </div>
         </section>
 
-        <table className="mt-6 w-full border-collapse text-sm">
+        <table className="mt-5 w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-stone-300 text-left text-xs tracking-wide text-stone-500 uppercase">
               <th className="py-2 pr-2 font-semibold">Item</th>
@@ -212,9 +209,30 @@ export function ReceiptPrint({
           </p>
         ) : null}
 
-        <footer className="mt-8 border-t border-stone-300 pt-4 text-center text-sm text-stone-600">
-          <p>Thank you for supporting our cottage bakery.</p>
-          <p className="mt-1">Questions? Call or text {BUSINESS.phone}.</p>
+        <footer className="receipt-footer mt-8 border-t border-stone-300 pt-4 text-sm text-stone-600">
+          <p className="text-center">
+            Thank you for supporting our cottage bakery.
+          </p>
+          <p className="mt-1 text-center">
+            Questions? Call or text {BUSINESS.phone}.
+          </p>
+          <div className="mt-5 flex items-center gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/google-review-qr.svg"
+              alt="QR code to leave a Google review"
+              width={96}
+              height={96}
+              className="size-24 shrink-0"
+            />
+            <p className="leading-relaxed">
+              Enjoyed your bake? Scan for a Google review, or search{" "}
+              <span className="font-medium text-stone-800">
+                April&apos;s Rising Kitchen
+              </span>{" "}
+              in Google Maps.
+            </p>
+          </div>
         </footer>
       </article>
 
@@ -222,11 +240,19 @@ export function ReceiptPrint({
         @media print {
           @page {
             size: letter;
-            margin: 0.6in;
+            margin: 0.55in;
           }
           html,
           body {
             background: white !important;
+          }
+          .receipt-footer {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          table tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
           }
         }
       `}</style>
