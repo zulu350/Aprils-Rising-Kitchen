@@ -40,7 +40,7 @@ export function NewOrderForm() {
   const [preferredTimeWindow, setPreferredTimeWindow] = useState("");
   const [notes, setNotes] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<
-    "cash" | "venmo" | "zelle" | "undecided"
+    "cash" | "venmo" | "zelle" | "square" | "undecided"
   >("cash");
   const [paid, setPaid] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
@@ -332,7 +332,7 @@ export function NewOrderForm() {
       <section className="space-y-4 rounded-2xl bg-cream p-5 ring-1 ring-linen">
         <h2 className="font-display text-lg text-espresso">Payment & notes</h2>
         <div className="flex flex-wrap gap-2">
-          {(["cash", "venmo", "zelle", "undecided"] as const).map((m) => (
+          {(["cash", "venmo", "zelle", "square", "undecided"] as const).map((m) => (
             <button
               key={m}
               type="button"
@@ -343,7 +343,7 @@ export function NewOrderForm() {
                   : "bg-white text-brown ring-1 ring-linen"
               }`}
             >
-              {m}
+              {m === "square" ? "Card / Apple Pay" : m}
             </button>
           ))}
         </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PaymentQrPanel } from "@/components/PaymentQrPanel";
 import { ReviewInvite } from "@/components/ReviewInvite";
+import { SquarePayPanel } from "@/components/SquarePayPanel";
 import { formatPrice } from "@/data/menu";
 import {
   STATUS_COLORS,
@@ -32,6 +33,7 @@ type OrderPayload = {
   adjustmentLabel?: string | null;
   status: string;
   paymentMethod: string;
+  paymentStatus?: string;
   subtotalCents: number;
   totalCents: number;
   createdAt?: string;
@@ -84,6 +86,18 @@ export function OrderConfirmation({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  async function loadOrder() {
+    const qs = new URLSearchParams({ t: accessToken });
+    const res = await fetch(
+      `/api/orders/${encodeURIComponent(orderNumber)}?${qs.toString()}`,
+    );
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Order not found.");
+    }
+    setOrder(data as OrderPayload);
+  }
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -97,18 +111,13 @@ export function OrderConfirmation({
         return;
       }
       try {
-        const qs = new URLSearchParams({ t: accessToken });
-        const res = await fetch(
-          `/api/orders/${encodeURIComponent(orderNumber)}?${qs.toString()}`,
-        );
-        const data = await res.json();
-        if (!res.ok) {
-          if (!cancelled) setError(data.error || "Order not found.");
-        } else if (!cancelled) {
-          setOrder(data as OrderPayload);
+        await loadOrder();
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : "Could not load order.",
+          );
         }
-      } catch {
-        if (!cancelled) setError("Could not load order.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -116,6 +125,7 @@ export function OrderConfirmation({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderNumber, accessToken]);
 
   if (loading) {
@@ -299,7 +309,24 @@ export function OrderConfirmation({
         ) : null}
       </div>
 
-      {order.paymentMethod === "cash" ? (
+      {order.paymentMethod === "square" ? (
+        <div className="mt-6">
+          {order.paymentStatus === "paid" ? (
+            <p className="rounded-2xl bg-sage/15 px-4 py-3 text-sm text-sage-dark ring-1 ring-sage/30">
+              Paid with card / Apple Pay. Thank you.
+            </p>
+          ) : order.status === "cancelled" ? null : (
+            <SquarePayPanel
+              orderNumber={order.orderNumber}
+              accessToken={accessToken}
+              amountCents={order.totalCents}
+              onPaid={() => {
+                void loadOrder();
+              }}
+            />
+          )}
+        </div>
+      ) : order.paymentMethod === "cash" ? (
         <p className="mt-6 text-sm text-muted">
           You chose cash — pay at pickup or delivery. Prefer Venmo or Zelle
           instead? Call or text us anytime.

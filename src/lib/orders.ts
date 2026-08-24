@@ -27,7 +27,7 @@ export type CreateOrderInput = {
   preferredDate: string;
   preferredTimeWindow?: string;
   notes?: string;
-  paymentMethod: "cash" | "venmo" | "zelle" | "undecided";
+  paymentMethod: "cash" | "venmo" | "zelle" | "square" | "undecided";
   items: CartLineInput[];
 };
 
@@ -143,7 +143,7 @@ export function validateCreateOrder(
   // Date + capacity validated in API after DB count (see create order route)
 
   const method = body.paymentMethod ?? "undecided";
-  if (!["cash", "venmo", "zelle", "undecided"].includes(method)) {
+  if (!["cash", "venmo", "zelle", "square", "undecided"].includes(method)) {
     return { ok: false, error: "Invalid payment preference." };
   }
 
@@ -211,7 +211,7 @@ export function validateAdminCreateOrder(
   if (error) return { ok: false, error };
 
   const method = body.paymentMethod ?? "undecided";
-  if (!["cash", "venmo", "zelle", "undecided"].includes(method)) {
+  if (!["cash", "venmo", "zelle", "square", "undecided"].includes(method)) {
     return { ok: false, error: "Invalid payment preference." };
   }
 

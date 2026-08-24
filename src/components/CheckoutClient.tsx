@@ -160,7 +160,8 @@ export function CheckoutClient() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="font-display text-4xl text-espresso">Checkout</h1>
       <p className="mt-2 text-sm text-muted">
-        No tax. Pay with cash, Venmo, or Zelle.{" "}
+        No tax. Cash, Venmo, or Zelle preferred. Card / Apple Pay available if
+        you need it.{" "}
         {availMsg?.hours}
       </p>
       {availMsg ? (
@@ -352,9 +353,9 @@ export function CheckoutClient() {
               Payment preference
             </legend>
             <p className="text-sm text-muted">
-              Cash, Venmo, or Zelle. Choose Venmo or Zelle to show a QR code you
-              can scan. Codes also appear on your order page after you place the
-              order.
+              Cash, Venmo, or Zelle — no extra card fee. Choose Venmo or Zelle
+              to show a QR you can scan. Card or Apple Pay (Square) is optional
+              if you need it.
             </p>
             <select
               name="paymentMethod"
@@ -368,11 +369,19 @@ export function CheckoutClient() {
               <option value="cash">Cash</option>
               <option value="venmo">Venmo</option>
               <option value="zelle">Zelle</option>
+              <option value="square">Card or Apple Pay (Square)</option>
             </select>
             <PaymentQrPanel method={paymentMethod} />
             {paymentMethod === "cash" ? (
               <p className="text-sm text-muted">
                 Pay with cash at pickup or delivery.
+              </p>
+            ) : null}
+            {paymentMethod === "square" ? (
+              <p className="text-sm text-muted">
+                You&apos;ll place the order first, then pay on the next page
+                with Apple Pay, Google Pay, or a card. Square processes the
+                payment.
               </p>
             ) : null}
             <label className="block text-sm">
@@ -400,7 +409,11 @@ export function CheckoutClient() {
             disabled={submitting}
             className="w-full rounded-full bg-crust-dark px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-espresso disabled:opacity-60"
           >
-            {submitting ? "Placing order…" : "Place order"}
+            {submitting
+              ? "Placing order…"
+              : paymentMethod === "square"
+                ? "Place order & continue to pay"
+                : "Place order"}
           </button>
           <p className="text-center text-xs text-muted">
             Or call/text{" "}

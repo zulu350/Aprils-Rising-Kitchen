@@ -13,6 +13,7 @@ import {
 } from "@/lib/admin-orders";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
+import { PAYMENT_METHOD_LABELS } from "@/lib/payment";
 
 type LineDraft = {
   key: string;
@@ -293,7 +294,8 @@ export function OrderDetail({ id }: { id: string }) {
             </span>
             <span className="rounded-full bg-cream px-2.5 py-0.5 text-xs font-semibold ring-1 ring-linen">
               {order.paymentStatus === "paid" ? "Paid" : "Unpaid"} ·{" "}
-              {order.paymentMethod}
+              {PAYMENT_METHOD_LABELS[order.paymentMethod] ??
+                order.paymentMethod}
             </span>
             {order.adminEditedAt ? (
               <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-900">

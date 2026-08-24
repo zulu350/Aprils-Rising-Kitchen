@@ -4,7 +4,16 @@ export type PaymentMethodPreference =
   | "cash"
   | "venmo"
   | "zelle"
+  | "square"
   | "undecided";
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: "Cash",
+  venmo: "Venmo",
+  zelle: "Zelle",
+  square: "Card / Apple Pay",
+  undecided: "To be decided",
+};
 
 export const PAYMENT = {
   venmo: {

@@ -10,6 +10,7 @@ import {
   type OrderStatus,
 } from "@/lib/admin-orders";
 import { formatDateLabel } from "@/lib/availability";
+import { PAYMENT_METHOD_LABELS } from "@/lib/payment";
 
 type OrderRow = {
   id: string;

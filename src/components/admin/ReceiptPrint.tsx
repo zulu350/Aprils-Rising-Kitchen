@@ -38,6 +38,7 @@ const PAYMENT_LABELS: Record<string, string> = {
   cash: "Cash",
   venmo: "Venmo",
   zelle: "Zelle",
+  square: "Card / Apple Pay",
   undecided: "To be decided",
 };
 
