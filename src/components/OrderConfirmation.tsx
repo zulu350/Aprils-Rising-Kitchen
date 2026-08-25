@@ -14,6 +14,7 @@ import {
 } from "@/lib/admin-orders";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
+import { squarePaidLabel } from "@/lib/payment";
 
 
 type OrderPayload = {
@@ -34,6 +35,7 @@ type OrderPayload = {
   status: string;
   paymentMethod: string;
   paymentStatus?: string;
+  squareWallet?: string | null;
   subtotalCents: number;
   totalCents: number;
   createdAt?: string;
@@ -313,7 +315,7 @@ export function OrderConfirmation({
         <div className="mt-6">
           {order.paymentStatus === "paid" ? (
             <p className="rounded-2xl bg-sage/15 px-4 py-3 text-sm text-sage-dark ring-1 ring-sage/30">
-              Paid with card / Apple Pay. Thank you.
+              {squarePaidLabel(order.squareWallet)} Thank you.
             </p>
           ) : order.status === "cancelled" ? null : (
             <SquarePayPanel

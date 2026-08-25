@@ -160,9 +160,15 @@ export function CheckoutClient() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="font-display text-4xl text-espresso">Checkout</h1>
       <p className="mt-2 text-sm text-muted">
-        No tax. Cash, Venmo, or Zelle preferred. Card / Apple Pay available if
-        you need it.{" "}
-        {availMsg?.hours}
+        No tax. Cash, Venmo, or Zelle.
+        <br />
+        Card, Google Pay, or Apple Pay if you prefer.
+        {availMsg?.hours ? (
+          <>
+            <br />
+            {availMsg.hours}
+          </>
+        ) : null}
       </p>
       {availMsg ? (
         <div className="mt-4 rounded-2xl bg-wheat px-4 py-3 text-sm leading-relaxed text-brown ring-1 ring-linen">
@@ -353,9 +359,9 @@ export function CheckoutClient() {
               Payment preference
             </legend>
             <p className="text-sm text-muted">
-              Cash, Venmo, or Zelle — no extra card fee. Choose Venmo or Zelle
-              to show a QR you can scan. Card or Apple Pay (Square) is optional
-              if you need it.
+              Cash, Venmo, or Zelle.
+              <br />
+              Card, Google Pay, or Apple Pay if you prefer.
             </p>
             <select
               name="paymentMethod"

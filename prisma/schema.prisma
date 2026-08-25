@@ -27,6 +27,8 @@ model Order {
   paymentStatus       String      @default("unpaid")
   /// Square payment id when paid by card / Apple Pay / Google Pay
   squarePaymentId     String?
+  /// apple_pay | google_pay | card
+  squareWallet        String?
   subtotalCents       Int
   deliveryFeeCents    Int         @default(0)
   /** Admin adjustment (cents); can be negative. totalCents = subtotal + delivery + adjustment */

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { squarePaidLabel } from "@/lib/payment";
 
 export const runtime = "nodejs";
 
@@ -62,6 +63,7 @@ export async function GET(request: Request, { params }: Params) {
     status: order.status,
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
+    squareWallet: order.squareWallet,
     subtotalCents: order.subtotalCents,
     deliveryFeeCents: order.deliveryFeeCents,
     adjustmentCents: order.adjustmentCents,
@@ -81,7 +83,7 @@ export async function GET(request: Request, { params }: Params) {
     paymentNote:
       order.paymentMethod === "square"
         ? order.paymentStatus === "paid"
-          ? "Paid with card / Apple Pay."
+          ? squarePaidLabel(order.squareWallet)
           : "Pay below with Apple Pay, Google Pay, or card (Square)."
         : order.paymentMethod === "venmo" || order.paymentMethod === "zelle"
         ? "Scan the QR below to pay, or use the handle shown. Cash also welcome at pickup/delivery."

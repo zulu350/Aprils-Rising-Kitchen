@@ -10,6 +10,7 @@ type Body = {
   sourceId?: string;
   idempotencyKey?: string;
   verificationToken?: string;
+  wallet?: string;
 };
 
 export async function POST(request: Request) {
@@ -84,6 +85,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const walletRaw = body.wallet?.trim() ?? "";
+  const wallet =
+    walletRaw === "apple_pay" ||
+    walletRaw === "google_pay" ||
+    walletRaw === "card"
+      ? walletRaw
+      : "card";
+
   const result = await createSquarePayment({
     sourceId,
     amountCents: order.totalCents,
@@ -102,6 +111,7 @@ export async function POST(request: Request) {
     data: {
       paymentStatus: "paid",
       squarePaymentId: result.payment.id ?? order.squarePaymentId,
+      squareWallet: wallet,
     },
   });
 

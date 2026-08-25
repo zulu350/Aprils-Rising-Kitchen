@@ -164,7 +164,11 @@ export function SquarePayPanel({
   }, [amountCents, orderNumber]);
 
   const charge = useCallback(
-    async (sourceId: string, verificationToken?: string) => {
+    async (
+      sourceId: string,
+      wallet: "apple_pay" | "google_pay" | "card",
+      verificationToken?: string,
+    ) => {
       const res = await fetch("/api/payments/square", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -174,6 +178,7 @@ export function SquarePayPanel({
           sourceId,
           verificationToken,
           idempotencyKey: randomKey(),
+          wallet,
         }),
       });
       const data = (await res.json()) as {
@@ -212,7 +217,7 @@ export function SquarePayPanel({
       } catch {
         // SCA not required in many US sandbox/production cases
       }
-      await charge(tokenResult.token, verificationToken);
+      await charge(tokenResult.token, "card", verificationToken);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed.");
     } finally {
@@ -231,7 +236,10 @@ export function SquarePayPanel({
       if (tokenResult.status !== "OK" || !tokenResult.token) {
         throw new Error("Payment was cancelled.");
       }
-      await charge(tokenResult.token);
+      await charge(
+        tokenResult.token,
+        kind === "apple" ? "apple_pay" : "google_pay",
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed.");
     } finally {

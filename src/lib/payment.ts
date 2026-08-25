@@ -15,6 +15,20 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   undecided: "To be decided",
 };
 
+export function squarePaidLabel(wallet?: string | null): string {
+  if (wallet === "apple_pay") return "Paid with Apple Pay.";
+  if (wallet === "google_pay") return "Paid with Google Pay.";
+  if (wallet === "card") return "Paid with card.";
+  return "Paid with card or digital wallet.";
+}
+
+export function squareMethodLabel(wallet?: string | null): string {
+  if (wallet === "apple_pay") return "Apple Pay";
+  if (wallet === "google_pay") return "Google Pay";
+  if (wallet === "card") return "Card";
+  return "Card / Apple Pay";
+}
+
 export const PAYMENT = {
   venmo: {
     label: "Venmo",

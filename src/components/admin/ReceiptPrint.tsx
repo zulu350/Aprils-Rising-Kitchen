@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatMoney } from "@/lib/admin-orders";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
+import { squareMethodLabel } from "@/lib/payment";
 
 export type ReceiptOrder = {
   id: string;
@@ -20,6 +21,7 @@ export type ReceiptOrder = {
   notes: string | null;
   paymentMethod: string;
   paymentStatus: string;
+  squareWallet?: string | null;
   subtotalCents: number;
   adjustmentCents: number;
   adjustmentLabel: string | null;
@@ -197,7 +199,10 @@ export function ReceiptPrint({
           <div className="flex justify-between text-stone-600">
             <span>Payment</span>
             <span>
-              {PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}
+              {order.paymentMethod === "square"
+                ? squareMethodLabel(order.squareWallet)
+                : (PAYMENT_LABELS[order.paymentMethod] ??
+                  order.paymentMethod)}
               {paid ? " · Paid" : ""}
             </span>
           </div>
