@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { formatPrice } from "@/data/menu";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
+import { PAYMENT_METHOD_LABELS } from "@/lib/payment";
 
 export type OrderEmailPayload = {
   id: string;
@@ -147,7 +148,7 @@ function buildKitchenText(order: OrderEmailPayload): string {
       ? `Time window: ${order.preferredTimeWindow}`
       : null,
     `Fulfillment: ${fulfillmentText(order)}`,
-    `Payment preference: ${order.paymentMethod}`,
+    `Payment preference: ${PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}`,
     "",
     "Items:",
     itemsListText(order),
@@ -165,6 +166,28 @@ function buildKitchenText(order: OrderEmailPayload): string {
 
 function customerOrderUrl(order: OrderEmailPayload): string {
   return `${siteBaseUrl()}/order/${encodeURIComponent(order.orderNumber)}?t=${encodeURIComponent(order.accessToken)}`;
+}
+
+function customerPaymentLines(order: OrderEmailPayload): string[] {
+  const method = order.paymentMethod;
+  if (method === "square") {
+    return [
+      "Payment: Card, Google Pay, or Apple Pay on your order page (link below).",
+    ];
+  }
+  if (method === "venmo" || method === "zelle") {
+    return [
+      `Payment: ${PAYMENT_METHOD_LABELS[method] ?? method}.`,
+      "Open your order page (link below) for the QR code when you're ready to pay.",
+    ];
+  }
+  if (method === "cash") {
+    return ["Payment: Cash at pickup or delivery."];
+  }
+  return [
+    "Payment: Cash, Venmo, or Zelle.",
+    "Card, Google Pay, or Apple Pay if you prefer — use the order page (link below).",
+  ];
 }
 
 function buildCustomerText(order: OrderEmailPayload): string {
@@ -188,8 +211,7 @@ function buildCustomerText(order: OrderEmailPayload): string {
     "",
     `Total: ${formatPrice(order.totalCents)}`,
     "",
-    "Payment: Cash, Venmo, or Zelle.",
-    "Open your order page (link below) for Venmo/Zelle QR codes when you're ready to pay.",
+    ...customerPaymentLines(order),
     "",
     `View your order: ${confirmUrl}`,
     "",
@@ -308,7 +330,7 @@ export async function sendOrderUpdatedEmail(
     placed ? `Originally placed: ${placed} (${BUSINESS.timezone})` : null,
     `Preferred date: ${formatDateLabel(order.preferredDate)}`,
     "",
-    `View your full order (status, payment QR if needed):\n${confirmUrl}`,
+    `View your full order:\n${confirmUrl}`,
     "",
     `Questions? Call or text ${BUSINESS.phone} or email ${BUSINESS.email}.`,
     "",

@@ -343,7 +343,7 @@ export function NewOrderForm() {
                   : "bg-white text-brown ring-1 ring-linen"
               }`}
             >
-              {m === "square" ? "Card / Apple Pay" : m}
+              {m === "square" ? "Card / Apple Pay / Google Pay" : m}
             </button>
           ))}
         </div>
