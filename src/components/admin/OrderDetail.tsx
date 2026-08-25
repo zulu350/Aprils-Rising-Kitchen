@@ -86,6 +86,8 @@ export function OrderDetail({ id }: { id: string }) {
   const [lines, setLines] = useState<LineDraft[]>([]);
   const [notes, setNotes] = useState("");
   const [adminNote, setAdminNote] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [adjustmentDollars, setAdjustmentDollars] = useState("0.00");
   const [adjustmentLabel, setAdjustmentLabel] = useState("");
@@ -118,6 +120,8 @@ export function OrderDetail({ id }: { id: string }) {
         );
         setNotes(o.notes || "");
         setAdminNote(o.adminNote || "");
+        setEmail(o.email || "");
+        setPhone(o.phone && o.phone !== "—" ? o.phone : "");
         setPreferredDate(o.preferredDate || "");
         setAdjustmentDollars(centsToDollarsInput(o.adjustmentCents ?? 0));
         setAdjustmentLabel(o.adjustmentLabel || "");
@@ -200,10 +204,12 @@ export function OrderDetail({ id }: { id: string }) {
           })),
           notes: notes.trim() || null,
           adminNote: adminNote.trim() || null,
+          email: email.trim() || "",
+          phone: phone.trim() || "—",
           preferredDate: preferredDate.trim() || undefined,
           adjustmentCents: dollarsToCents(adjustmentDollars),
           adjustmentLabel: adjustmentLabel.trim() || null,
-          notifyCustomer: notifyCustomer && Boolean(order.email),
+          notifyCustomer: notifyCustomer && Boolean(email.trim()),
         }),
       });
       const data = await res.json();
@@ -682,6 +688,32 @@ export function OrderDetail({ id }: { id: string }) {
               </label>
             </div>
 
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm">
+                <span className="font-medium text-brown">Phone</span>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Optional"
+                  className="mt-1 w-full rounded-xl border border-linen bg-white px-3 py-2.5 text-sm"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="font-medium text-brown">Email</span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setEmail(v);
+                    if (v.trim()) setNotifyCustomer(true);
+                  }}
+                  placeholder="Optional"
+                  className="mt-1 w-full rounded-xl border border-linen bg-white px-3 py-2.5 text-sm"
+                />
+              </label>
+            </div>
             <label className="block text-sm">
               <span className="font-medium text-brown">
                 Fulfillment date (admin may set any day for specials)
@@ -745,15 +777,15 @@ export function OrderDetail({ id }: { id: string }) {
               <input
                 type="checkbox"
                 checked={notifyCustomer}
-                disabled={!order.email}
+                disabled={!email.trim()}
                 onChange={(e) => setNotifyCustomer(e.target.checked)}
                 className="mt-1"
               />
               <span>
                 Email customer about this update
-                {!order.email ? (
+                {!email.trim() ? (
                   <span className="block text-xs text-muted">
-                    Unavailable — no email on this order.
+                    Unavailable — add an email above.
                   </span>
                 ) : (
                   <span className="block text-xs text-muted">

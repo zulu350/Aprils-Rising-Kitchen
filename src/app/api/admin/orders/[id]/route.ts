@@ -26,6 +26,8 @@ type PatchBody = {
   items?: EditItemInput[];
   notes?: string | null;
   adminNote?: string | null;
+  email?: string | null;
+  phone?: string | null;
   /** Admin may set any date for special requests (not bound by public bake days) */
   preferredDate?: string | null;
   adjustmentCents?: number;
@@ -134,6 +136,22 @@ export async function PATCH(request: Request, { params }: Params) {
 
   if (body.notes !== undefined) {
     data.notes = body.notes?.trim() || null;
+    contentEdit = true;
+  }
+  if (body.email !== undefined) {
+    const emailRaw = body.email?.trim() ?? "";
+    if (emailRaw && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw)) {
+      return NextResponse.json(
+        { error: "Please enter a valid email, or leave it blank." },
+        { status: 400 },
+      );
+    }
+    data.email = emailRaw ? emailRaw.toLowerCase() : "";
+    contentEdit = true;
+  }
+  if (body.phone !== undefined) {
+    const phone = body.phone?.trim() || "—";
+    data.phone = phone;
     contentEdit = true;
   }
   if (body.adminNote !== undefined) {
