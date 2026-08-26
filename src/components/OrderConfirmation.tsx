@@ -302,7 +302,11 @@ export function OrderConfirmation({
           <span className="tabular-nums">{formatPrice(order.totalCents)}</span>
         </div>
 
-        <p className="text-sm text-muted">{order.paymentNote}</p>
+        {order.paymentNote ? (
+          <p className="whitespace-pre-line text-sm text-muted">
+            {order.paymentNote}
+          </p>
+        ) : null}
         {order.notes ? (
           <p className="text-sm">
             <span className="font-medium text-brown">Your notes: </span>
@@ -328,12 +332,7 @@ export function OrderConfirmation({
             />
           )}
         </div>
-      ) : order.paymentMethod === "cash" ? (
-        <p className="mt-6 text-sm text-muted">
-          You chose cash — pay at pickup or delivery. Prefer Venmo or Zelle
-          instead? Call or text us anytime.
-        </p>
-      ) : (
+      ) : order.paymentMethod === "cash" ? null : (
         <div className="mt-6">
           <PaymentQrPanel
             method={order.paymentMethod}
