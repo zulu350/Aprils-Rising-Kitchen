@@ -123,6 +123,8 @@ export async function POST(request: Request) {
         preferredTimeWindow: order.preferredTimeWindow,
         notes: order.notes,
         paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        squareWallet: order.squareWallet,
         subtotalCents: order.subtotalCents,
         deliveryFeeCents: order.deliveryFeeCents,
         totalCents: order.totalCents,

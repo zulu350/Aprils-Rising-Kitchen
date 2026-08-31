@@ -80,12 +80,14 @@ export async function GET(request: Request, { params }: Params) {
     })),
     pickupAddress,
     paymentNote:
-      order.paymentMethod === "square"
+      order.paymentStatus === "paid"
         ? ""
-        : order.paymentMethod === "venmo" || order.paymentMethod === "zelle"
-          ? "Scan the QR below, or pay cash at pickup."
-          : order.paymentMethod === "cash"
-            ? "Cash at pickup or delivery."
-            : "Cash, Venmo, or Zelle.\nCard, Google Pay, or Apple Pay if you prefer.",
+        : order.paymentMethod === "square"
+          ? ""
+          : order.paymentMethod === "venmo" || order.paymentMethod === "zelle"
+            ? "Scan the QR below, or pay cash at pickup."
+            : order.paymentMethod === "cash"
+              ? "Cash at pickup or delivery."
+              : "Cash, Venmo, or Zelle.\nCard, Google Pay, or Apple Pay if you prefer.",
   });
 }

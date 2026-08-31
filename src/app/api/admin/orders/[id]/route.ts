@@ -265,6 +265,8 @@ export async function PATCH(request: Request, { params }: Params) {
           notes: order.notes,
           adminNote: order.adminNote,
           paymentMethod: order.paymentMethod,
+          paymentStatus: order.paymentStatus,
+          squareWallet: order.squareWallet,
           subtotalCents: order.subtotalCents,
           deliveryFeeCents: order.deliveryFeeCents,
           adjustmentCents: order.adjustmentCents,

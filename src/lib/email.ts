@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import { formatPrice } from "@/data/menu";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
-import { PAYMENT_METHOD_LABELS } from "@/lib/payment";
+import { PAYMENT_METHOD_LABELS, paidThankYouLabel } from "@/lib/payment";
 
 export type OrderEmailPayload = {
   id: string;
@@ -19,6 +19,8 @@ export type OrderEmailPayload = {
   notes: string | null;
   adminNote?: string | null;
   paymentMethod: string;
+  paymentStatus?: string;
+  squareWallet?: string | null;
   subtotalCents: number;
   deliveryFeeCents?: number;
   adjustmentCents?: number;
@@ -178,6 +180,9 @@ function customerOrderUrl(order: OrderEmailPayload): string {
 }
 
 function customerPaymentLines(order: OrderEmailPayload): string[] {
+  if (order.paymentStatus === "paid") {
+    return [paidThankYouLabel(order.paymentMethod, order.squareWallet)];
+  }
   const method = order.paymentMethod;
   if (method === "square") {
     return [
@@ -324,6 +329,7 @@ export async function sendOrderUpdatedEmail(
 
   const confirmUrl = customerOrderUrl(order);
   const placed = formatPlacedAt(order.createdAt);
+  const isPaid = order.paymentStatus === "paid";
   const text = [
     `Hi ${order.customerName},`,
     "",
@@ -335,7 +341,12 @@ export async function sendOrderUpdatedEmail(
     "Updated items:",
     itemsListText(order),
     "",
-    `Amount owed: ${formatPrice(order.totalCents)}`,
+    isPaid
+      ? `Total: ${formatPrice(order.totalCents)}`
+      : `Amount owed: ${formatPrice(order.totalCents)}`,
+    isPaid
+      ? paidThankYouLabel(order.paymentMethod, order.squareWallet)
+      : null,
     placed ? `Originally placed: ${placed} (${BUSINESS.timezone})` : null,
     `Preferred date: ${formatDateLabel(order.preferredDate)}`,
     "",

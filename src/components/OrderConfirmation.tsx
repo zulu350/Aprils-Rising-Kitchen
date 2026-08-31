@@ -14,7 +14,7 @@ import {
 } from "@/lib/admin-orders";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
-import { squarePaidLabel } from "@/lib/payment";
+import { paidThankYouLabel } from "@/lib/payment";
 
 
 type OrderPayload = {
@@ -156,6 +156,7 @@ export function OrderConfirmation({
     );
   }
 
+  const isPaid = order.paymentStatus === "paid";
   const headline =
     order.status === "completed"
       ? "Order complete"
@@ -193,6 +194,11 @@ export function OrderConfirmation({
           >
             {statusLabel(order.status)}
           </span>
+          {isPaid ? (
+            <span className="inline-flex rounded-full bg-sage/20 px-4 py-1.5 text-sm font-semibold text-sage-dark ring-1 ring-sage/30">
+              Paid
+            </span>
+          ) : null}
         </div>
         <p className="mt-3 text-sm leading-relaxed text-brown">
           {statusHelp(order.status)}
@@ -310,11 +316,11 @@ export function OrderConfirmation({
         ) : null}
 
         <div className="flex justify-between border-t border-linen pt-4 font-semibold text-espresso">
-          <span>Amount owed</span>
+          <span>{isPaid ? "Total" : "Amount owed"}</span>
           <span className="tabular-nums">{formatPrice(order.totalCents)}</span>
         </div>
 
-        {order.paymentNote ? (
+        {!isPaid && order.paymentNote ? (
           <p className="whitespace-pre-line text-sm text-muted">
             {order.paymentNote}
           </p>
@@ -327,22 +333,23 @@ export function OrderConfirmation({
         ) : null}
       </div>
 
-      {order.paymentMethod === "square" ? (
+      {isPaid ? (
         <div className="mt-6">
-          {order.paymentStatus === "paid" ? (
-            <p className="rounded-2xl bg-sage/15 px-4 py-3 text-sm text-sage-dark ring-1 ring-sage/30">
-              {squarePaidLabel(order.squareWallet)} Thank you.
-            </p>
-          ) : order.status === "cancelled" ? null : (
-            <SquarePayPanel
-              orderNumber={order.orderNumber}
-              accessToken={accessToken}
-              amountCents={order.totalCents}
-              onPaid={() => {
-                void loadOrder();
-              }}
-            />
-          )}
+          <p className="rounded-2xl bg-sage/15 px-4 py-3 text-sm text-sage-dark ring-1 ring-sage/30">
+            {paidThankYouLabel(order.paymentMethod, order.squareWallet)}
+          </p>
+        </div>
+      ) : order.status === "cancelled" ? null : order.paymentMethod ===
+        "square" ? (
+        <div className="mt-6">
+          <SquarePayPanel
+            orderNumber={order.orderNumber}
+            accessToken={accessToken}
+            amountCents={order.totalCents}
+            onPaid={() => {
+              void loadOrder();
+            }}
+          />
         </div>
       ) : order.paymentMethod === "cash" ? null : (
         <div className="mt-6">

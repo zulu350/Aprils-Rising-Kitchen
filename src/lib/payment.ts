@@ -22,6 +22,18 @@ export function squarePaidLabel(wallet?: string | null): string {
   return "Paid with card or digital wallet.";
 }
 
+/** Customer-facing thank-you once the kitchen (or Square) has marked the order paid. */
+export function paidThankYouLabel(
+  method: string,
+  wallet?: string | null,
+): string {
+  if (method === "square") return `${squarePaidLabel(wallet)} Thank you.`;
+  if (method === "venmo") return "Paid with Venmo. Thank you.";
+  if (method === "zelle") return "Paid with Zelle. Thank you.";
+  if (method === "cash") return "Paid with cash. Thank you.";
+  return "Paid. Thank you.";
+}
+
 export function squareMethodLabel(wallet?: string | null): string {
   if (wallet === "apple_pay") return "Apple Pay";
   if (wallet === "google_pay") return "Google Pay";
