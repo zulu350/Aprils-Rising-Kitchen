@@ -13,6 +13,7 @@ import {
 } from "@/lib/admin-orders";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
+import { deliveryFeeCents } from "@/lib/delivery";
 import { PAYMENT_METHOD_LABELS, squareMethodLabel } from "@/lib/payment";
 
 type LineDraft = {
@@ -46,6 +47,7 @@ type OrderDetailData = {
   paymentStatus: PaymentStatus;
   squareWallet?: string | null;
   subtotalCents: number;
+  deliveryFeeCents?: number;
   totalCents: number;
   createdAt: string;
   pickupAddress: string | null;
@@ -141,8 +143,12 @@ export function OrderDetail({ id }: { id: string }) {
       lines.reduce((s, l) => s + l.unitPriceCents * Math.max(0, l.quantity), 0),
     [lines],
   );
+  const previewDeliveryFee = deliveryFeeCents(
+    order?.fulfillment ?? "pickup",
+    previewSubtotal,
+  );
   const previewAdjustment = dollarsToCents(adjustmentDollars);
-  const previewTotal = previewSubtotal + previewAdjustment;
+  const previewTotal = previewSubtotal + previewDeliveryFee + previewAdjustment;
 
   async function patch(body: {
     status?: OrderStatus;
@@ -528,6 +534,16 @@ export function OrderDetail({ id }: { id: string }) {
                 </li>
               ))}
             </ul>
+            {order.fulfillment === "delivery" ? (
+              <div className="flex justify-between border-t border-linen pt-3 text-sm">
+                <span>Delivery</span>
+                <span className="tabular-nums">
+                  {(order.deliveryFeeCents ?? 0) === 0
+                    ? "Free"
+                    : formatMoney(order.deliveryFeeCents ?? 0)}
+                </span>
+              </div>
+            ) : null}
             {(order.adjustmentCents ?? 0) !== 0 ? (
               <div className="flex justify-between border-t border-linen pt-3 text-sm">
                 <span>
@@ -756,6 +772,16 @@ export function OrderDetail({ id }: { id: string }) {
                   {formatMoney(previewSubtotal)}
                 </span>
               </div>
+              {order.fulfillment === "delivery" ? (
+                <div className="mt-1 flex justify-between text-muted">
+                  <span>Delivery</span>
+                  <span className="tabular-nums">
+                    {previewDeliveryFee === 0
+                      ? "Free"
+                      : formatMoney(previewDeliveryFee)}
+                  </span>
+                </div>
+              ) : null}
               {previewAdjustment !== 0 ? (
                 <div className="mt-1 flex justify-between text-muted">
                   <span>{adjustmentLabel || "Adjustment"}</span>

@@ -138,8 +138,8 @@ export function CartClient() {
           </span>
         </div>
         <p className="mt-2 text-xs text-muted">
-          No sales tax. Delivery available in Boise &amp; Meridian. Payment by
-          cash, Venmo, or Zelle after we confirm.
+          No sales tax. Delivery in Boise &amp; Meridian is $8 under $30, free
+          at $30 and up.
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link

@@ -37,6 +37,7 @@ type OrderPayload = {
   paymentStatus?: string;
   squareWallet?: string | null;
   subtotalCents: number;
+  deliveryFeeCents?: number;
   totalCents: number;
   createdAt?: string;
   items: Array<{
@@ -286,6 +287,17 @@ export function OrderConfirmation({
             </li>
           ))}
         </ul>
+
+        {order.fulfillment === "delivery" ? (
+          <div className="flex justify-between text-sm text-brown">
+            <span>Delivery</span>
+            <span className="tabular-nums">
+              {(order.deliveryFeeCents ?? 0) === 0
+                ? "Free"
+                : formatPrice(order.deliveryFeeCents ?? 0)}
+            </span>
+          </div>
+        ) : null}
 
         {(order.adjustmentCents ?? 0) !== 0 ? (
           <div className="flex justify-between text-sm text-brown">

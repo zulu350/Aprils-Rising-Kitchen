@@ -20,6 +20,7 @@ export type OrderEmailPayload = {
   adminNote?: string | null;
   paymentMethod: string;
   subtotalCents: number;
+  deliveryFeeCents?: number;
   adjustmentCents?: number;
   adjustmentLabel?: string | null;
   totalCents: number;
@@ -111,6 +112,14 @@ function itemsListText(order: OrderEmailPayload): string {
     (item) =>
       `  • ${item.quantity}× ${item.name} (${item.unitLabel}) — ${formatPrice(item.lineTotalCents)}`,
   );
+  if (order.fulfillment === "delivery") {
+    const fee = order.deliveryFeeCents ?? 0;
+    lines.push(
+      fee > 0
+        ? `  • Delivery — ${formatPrice(fee)}`
+        : "  • Delivery — Free",
+    );
+  }
   if (order.adjustmentCents) {
     const label = order.adjustmentLabel?.trim() || "Adjustment";
     const sign = order.adjustmentCents > 0 ? "+" : "";

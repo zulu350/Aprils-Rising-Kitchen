@@ -23,6 +23,7 @@ export type ReceiptOrder = {
   paymentStatus: string;
   squareWallet?: string | null;
   subtotalCents: number;
+  deliveryFeeCents: number;
   adjustmentCents: number;
   adjustmentLabel: string | null;
   totalCents: number;
@@ -179,6 +180,16 @@ export function ReceiptPrint({
             <span>Subtotal</span>
             <span className="tabular-nums">{formatMoney(order.subtotalCents)}</span>
           </div>
+          {order.fulfillment === "delivery" ? (
+            <div className="flex justify-between">
+              <span>Delivery</span>
+              <span className="tabular-nums">
+                {order.deliveryFeeCents === 0
+                  ? "Free"
+                  : formatMoney(order.deliveryFeeCents)}
+              </span>
+            </div>
+          ) : null}
           {order.adjustmentCents !== 0 ? (
             <div className="flex justify-between">
               <span>{order.adjustmentLabel || "Adjustment"}</span>

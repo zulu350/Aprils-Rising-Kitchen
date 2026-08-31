@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendNewOrderEmails } from "@/lib/email";
+import { deliveryFeeCents as calcDeliveryFee } from "@/lib/delivery";
 import {
   nextOrderNumber,
   validateAdminCreateOrder,
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
     phone,
     paymentStatus,
   } = result;
-  const deliveryFeeCents = 0;
+  const deliveryFeeCents = calcDeliveryFee(body.fulfillment, subtotalCents);
   const totalCents = subtotalCents + deliveryFeeCents;
 
   try {
@@ -131,6 +132,7 @@ export async function POST(request: Request) {
         notes: order.notes,
         paymentMethod: order.paymentMethod,
         subtotalCents: order.subtotalCents,
+        deliveryFeeCents: order.deliveryFeeCents,
         totalCents: order.totalCents,
         createdAt: order.createdAt.toISOString(),
         items: order.items.map((item) => ({

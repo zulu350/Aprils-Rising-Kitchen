@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BUSINESS } from "@/lib/constants";
+import { HOW_IT_WORKS_FULFILLMENT } from "@/lib/delivery";
 
 export default function HomePage() {
   return (
@@ -136,7 +137,7 @@ export default function HomePage() {
               {
                 step: "3",
                 title: "Pickup or delivery",
-                body: `Between 1:00–5:00 PM in ${BUSINESS.serviceArea}. Pay with cash, Venmo, or Zelle.`,
+                body: HOW_IT_WORKS_FULFILLMENT,
               },
             ].map((item) => (
               <li

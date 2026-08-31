@@ -5,6 +5,7 @@ import {
 } from "@/lib/admin-orders";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { deliveryFeeCents as calcDeliveryFee } from "@/lib/delivery";
 import { sendOrderUpdatedEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -227,8 +228,12 @@ export async function PATCH(request: Request, { params }: Params) {
           })),
         });
         const subtotalCents = items.reduce((s, i) => s + i.lineTotalCents, 0);
-        const deliveryFeeCents = existing.deliveryFeeCents;
+        const deliveryFeeCents = calcDeliveryFee(
+          existing.fulfillment,
+          subtotalCents,
+        );
         data.subtotalCents = subtotalCents;
+        data.deliveryFeeCents = deliveryFeeCents;
         data.totalCents = subtotalCents + deliveryFeeCents + adjustmentCents;
       } else if (body.adjustmentCents !== undefined) {
         data.totalCents =
@@ -261,6 +266,7 @@ export async function PATCH(request: Request, { params }: Params) {
           adminNote: order.adminNote,
           paymentMethod: order.paymentMethod,
           subtotalCents: order.subtotalCents,
+          deliveryFeeCents: order.deliveryFeeCents,
           adjustmentCents: order.adjustmentCents,
           adjustmentLabel: order.adjustmentLabel,
           totalCents: order.totalCents,

@@ -8,7 +8,7 @@ Backlog from v1 planning. Revisit when ready (not built yet).
    Show real payment handles or QR after order (or when kitchen marks confirmed). Currently: “details when we contact you.”
 
 2. **Delivery fee rules**  
-   You mentioned ~$10 in Boise/Meridian and $0.50/mile outside; later deferred. When ready: city base fee + optional mileage from kitchen, shown at checkout.
+   ~~You mentioned ~$10 in Boise/Meridian and $0.50/mile outside.~~ Done: $8 under $30, free at $30+ (Boise & Meridian).
 
 3. **Deploy / hosting**  
    Run as a long-lived Node process with SQLite on disk (VPS, Railway, Fly, home mini-PC). Not ideal on pure serverless without external DB.
@@ -37,3 +37,4 @@ Backlog from v1 planning. Revisit when ready (not built yet).
 ## Done in follow-ups
 
 - [x] Email notify on new orders (kitchen + customer confirmation via SMTP)
+- [x] Delivery fee: $8 under $30, free at $30 and up (Boise & Meridian)

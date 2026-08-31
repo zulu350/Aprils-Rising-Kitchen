@@ -11,6 +11,7 @@ import {
 } from "@/data/menu";
 import { formatMoney } from "@/lib/admin-orders";
 import { nowInBoise, toISODate } from "@/lib/availability";
+import { deliveryFeeCents } from "@/lib/delivery";
 
 type Line = {
   key: string;
@@ -52,6 +53,8 @@ export function NewOrderForm() {
     () => lines.reduce((sum, line) => sum + line.item.priceCents * line.quantity, 0),
     [lines],
   );
+  const feeCents = deliveryFeeCents(fulfillment, subtotalCents);
+  const totalCents = subtotalCents + feeCents;
 
   function addLine() {
     const item = availableItems.find((i) => i.id === addItemId);
@@ -323,10 +326,20 @@ export function NewOrderForm() {
             ))}
           </ul>
         )}
-        <p className="text-right text-lg font-semibold tabular-nums text-espresso">
-          Total {formatMoney(subtotalCents)}
-          <span className="ml-2 text-sm font-normal text-muted">No tax</span>
-        </p>
+        <div className="space-y-1 text-right">
+          {fulfillment === "delivery" ? (
+            <p className="text-sm text-muted tabular-nums">
+              Delivery {feeCents === 0 ? "Free" : formatMoney(feeCents)}
+              <span className="ml-2 font-normal">
+                ($8 under $30, free at $30+)
+              </span>
+            </p>
+          ) : null}
+          <p className="text-lg font-semibold tabular-nums text-espresso">
+            Total {formatMoney(totalCents)}
+            <span className="ml-2 text-sm font-normal text-muted">No tax</span>
+          </p>
+        </div>
       </section>
 
       <section className="space-y-4 rounded-2xl bg-cream p-5 ring-1 ring-linen">

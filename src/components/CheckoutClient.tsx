@@ -10,6 +10,7 @@ import {
 import { PaymentQrPanel } from "@/components/PaymentQrPanel";
 import { useCart } from "@/lib/cart";
 import { BUSINESS } from "@/lib/constants";
+import { deliveryFeeCents } from "@/lib/delivery";
 import { MESSAGING, type DateSlot } from "@/lib/availability";
 import type { PaymentMethodPreference } from "@/lib/payment";
 
@@ -82,6 +83,9 @@ export function CheckoutClient() {
       </div>
     );
   }
+
+  const feeCents = deliveryFeeCents(fulfillment, subtotalCents);
+  const totalCents = subtotalCents + feeCents;
 
   if (itemCount === 0) {
     return (
@@ -260,8 +264,9 @@ export function CheckoutClient() {
               <div className="space-y-3">
                 <p className="text-sm text-muted">
                   Delivery in {BUSINESS.serviceArea},{" "}
-                  <strong className="font-medium text-espresso">1:00–5:00 PM</strong> on your chosen
-                  day.
+                  <strong className="font-medium text-espresso">1:00–5:00 PM</strong> on
+                  your chosen day. Under $30, delivery is $8. At $30+, we
+                  deliver free!
                 </p>
                 <label className="block text-sm">
                   <span className="font-medium text-brown">City *</span>
@@ -446,9 +451,21 @@ export function CheckoutClient() {
               </li>
             ))}
           </ul>
-          <div className="mt-4 flex justify-between border-t border-linen pt-4 font-semibold text-espresso">
+          {fulfillment === "delivery" ? (
+            <div className="mt-4 flex justify-between border-t border-linen pt-4 text-sm text-brown">
+              <span>Delivery</span>
+              <span className="tabular-nums">
+                {feeCents === 0 ? "Free" : formatPrice(feeCents)}
+              </span>
+            </div>
+          ) : (
+            <div className="mt-4 border-t border-linen pt-4" />
+          )}
+          <div
+            className={`flex justify-between font-semibold text-espresso ${fulfillment === "delivery" ? "mt-2" : ""}`}
+          >
             <span>Total</span>
-            <span className="tabular-nums">{formatPrice(subtotalCents)}</span>
+            <span className="tabular-nums">{formatPrice(totalCents)}</span>
           </div>
           <Link
             href="/cart"
