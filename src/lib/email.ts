@@ -28,6 +28,8 @@ export type OrderEmailPayload = {
   totalCents: number;
   /** ISO timestamp when the order was placed */
   createdAt?: string;
+  /** Set when the order was created via the staff API (desk), not storefront. */
+  createdVia?: "staff-api";
   items: Array<{
     name: string;
     unitLabel: string;
@@ -56,6 +58,11 @@ function formatPlacedAt(iso?: string): string {
 
 export function isEmailConfigured(): boolean {
   return Boolean(env("SMTP_HOST") && env("SMTP_USER") && env("SMTP_PASS"));
+}
+
+/** Staff-API creates email the bakery unless explicitly set to false. */
+export function staffCreateBakeryEmailEnabled(): boolean {
+  return env("STAFF_CREATE_EMAIL_BAKERY") !== "false";
 }
 
 function getTransporter() {
@@ -142,14 +149,36 @@ function fulfillmentText(order: OrderEmailPayload): string {
   return "Pickup (daylight hours; address shared with customer on confirmation)";
 }
 
+function kitchenPhone(phone: string): string {
+  const trimmed = phone.trim();
+  if (!trimmed || trimmed === "—") return "(not provided)";
+  return trimmed;
+}
+
+function kitchenPaymentLine(order: OrderEmailPayload): string {
+  const method =
+    PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod;
+  const paid =
+    order.paymentStatus === "paid"
+      ? "Paid"
+      : order.paymentStatus === "unpaid"
+        ? "Unpaid"
+        : null;
+  if (paid) return `Payment: ${paid} · ${method}`;
+  return `Payment preference: ${method}`;
+}
+
 function buildKitchenText(order: OrderEmailPayload): string {
   const adminUrl = `${siteBaseUrl()}/admin/orders/${order.id}`;
   return [
     `New order ${order.orderNumber}`,
+    order.createdVia === "staff-api"
+      ? "Source: staff API (desk) — not a website checkout."
+      : null,
     "",
     `Customer: ${order.customerName}`,
     `Email: ${order.email || "(not provided)"}`,
-    `Phone: ${order.phone}`,
+    `Phone: ${kitchenPhone(order.phone)}`,
     order.createdAt
       ? `Placed: ${formatPlacedAt(order.createdAt)} (${BUSINESS.timezone})`
       : null,
@@ -159,7 +188,7 @@ function buildKitchenText(order: OrderEmailPayload): string {
       ? `Time window: ${order.preferredTimeWindow}`
       : null,
     `Fulfillment: ${fulfillmentText(order)}`,
-    `Payment preference: ${PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}`,
+    kitchenPaymentLine(order),
     "",
     "Items:",
     itemsListText(order),
@@ -266,7 +295,10 @@ export async function sendNewOrderEmails(
       from,
       to: kitchenNotifyTo(),
       ...(order.email ? { replyTo: order.email } : {}),
-      subject: `New order ${order.orderNumber} — ${order.customerName}`,
+      subject:
+        order.createdVia === "staff-api"
+          ? `New order ${order.orderNumber} (desk) — ${order.customerName}`
+          : `New order ${order.orderNumber} — ${order.customerName}`,
       text: buildKitchenText(order),
     });
     result.kitchen = true;

@@ -1,5 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/db";
+import {
+  sendNewOrderEmails,
+  staffCreateBakeryEmailEnabled,
+} from "@/lib/email";
 import { nextOrderNumber } from "@/lib/orders";
 import {
   quoteStaffCreate,
@@ -19,9 +23,9 @@ function newAccessToken(): string {
 }
 
 /**
- * Staff/manual create. No customer email. Status starts Confirmed,
- * matching kitchen New order. On TLS EOF after POST, GET Active
- * before creating again — do not POST twice.
+ * Staff/manual create. Status starts Confirmed, matching kitchen New order.
+ * Bakery inbox is notified; customer is not emailed. On TLS EOF after POST,
+ * GET Active before creating again — do not POST twice.
  */
 export async function POST(request: Request) {
   if (!isStaffAuthorized(request)) {
@@ -93,13 +97,51 @@ export async function POST(request: Request) {
           })),
         },
       },
-      include: { items: { select: { quantity: true, name: true } } },
+      include: { items: true },
     });
+
+    let bakeryEmail = false;
+    if (staffCreateBakeryEmailEnabled()) {
+      try {
+        const mailed = await sendNewOrderEmails({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          accessToken: order.accessToken,
+          customerName: order.customerName,
+          email: "",
+          phone: order.phone,
+          fulfillment: order.fulfillment,
+          deliveryCity: order.deliveryCity,
+          deliveryAddress: order.deliveryAddress,
+          preferredDate: order.preferredDate,
+          preferredTimeWindow: order.preferredTimeWindow,
+          notes: order.notes,
+          paymentMethod: order.paymentMethod,
+          paymentStatus: order.paymentStatus,
+          subtotalCents: order.subtotalCents,
+          deliveryFeeCents: order.deliveryFeeCents,
+          totalCents: order.totalCents,
+          createdAt: order.createdAt.toISOString(),
+          createdVia: "staff-api",
+          items: order.items.map((item) => ({
+            name: item.name,
+            unitLabel: item.unitLabel,
+            quantity: item.quantity,
+            unitPriceCents: item.unitPriceCents,
+            lineTotalCents: item.lineTotalCents,
+          })),
+        });
+        bakeryEmail = mailed.kitchen;
+      } catch (err) {
+        console.error("Staff create bakery email error:", err);
+      }
+    }
 
     return Response.json(
       {
         generatedAt: new Date().toISOString(),
         order: toStaffOrderRow(order),
+        email: { bakery: bakeryEmail },
       },
       { status: 201, headers: { "Cache-Control": "no-store" } },
     );
