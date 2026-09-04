@@ -1,5 +1,5 @@
-import { STATUS_LABELS, isOrderStatus } from "@/lib/admin-orders";
 import { prisma } from "@/lib/db";
+import { toStaffOrderRow } from "@/lib/staff-orders";
 import {
   isStaffAuthorized,
   staffUnauthorizedResponse,
@@ -7,12 +7,6 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function staffPhone(phone: string): string | null {
-  const trimmed = phone.trim();
-  if (!trimmed || trimmed === "—") return null;
-  return trimmed;
-}
 
 export async function GET(request: Request) {
   if (!isStaffAuthorized(request)) {
@@ -30,24 +24,7 @@ export async function GET(request: Request) {
       orderBy: [{ preferredDate: "asc" }, { createdAt: "desc" }],
     });
 
-    const orders = rows.map((order) => ({
-      id: order.orderNumber,
-      status: isOrderStatus(order.status)
-        ? STATUS_LABELS[order.status]
-        : order.status,
-      payment: order.paymentStatus === "paid" ? "Paid" : "Unpaid",
-      total: order.totalCents / 100,
-      fulfillmentDate: order.preferredDate,
-      fulfillmentType:
-        order.fulfillment === "delivery" ? "delivery" : "pickup",
-      customerName: order.customerName,
-      customerPhone: staffPhone(order.phone),
-      placedAt: order.createdAt.toISOString(),
-      items: order.items.map((item) => ({
-        quantity: item.quantity,
-        name: item.name,
-      })),
-    }));
+    const orders = rows.map((order) => toStaffOrderRow(order));
 
     return Response.json(
       { generatedAt, count: orders.length, orders },
