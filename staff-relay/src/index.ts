@@ -7,6 +7,7 @@ const ALLOWED: Array<{ method: string; pattern: RegExp }> = [
   { method: "GET", pattern: /^\/api\/staff\/orders\/ARK-\d+$/i },
   { method: "PATCH", pattern: /^\/api\/staff\/orders\/ARK-\d+$/i },
   { method: "POST", pattern: /^\/api\/staff\/orders\/preview$/ },
+  { method: "GET", pattern: /^\/api\/staff\/orders$/ },
   { method: "POST", pattern: /^\/api\/staff\/orders$/ },
 ];
 

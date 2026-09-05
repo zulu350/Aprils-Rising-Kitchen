@@ -6,6 +6,12 @@ import {
 } from "@/lib/email";
 import { nextOrderNumber } from "@/lib/orders";
 import {
+  parseStaffListSearch,
+  phoneDigitsMatch,
+  staffListOrderBy,
+  staffListPrismaWhere,
+} from "@/lib/staff-order-search";
+import {
   quoteStaffCreate,
   toStaffOrderRow,
   type StaffCreateBody,
@@ -17,6 +23,88 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const LIST_INCLUDE = {
+  items: {
+    select: { quantity: true, name: true, menuItemId: true },
+  },
+} as const;
+
+/**
+ * Search / list. Empty filters return the newest `limit` orders (default 50, max 100).
+ * GET only — no email, no writes.
+ */
+export async function GET(request: Request) {
+  if (!isStaffAuthorized(request)) {
+    return staffUnauthorizedResponse();
+  }
+
+  const generatedAt = new Date().toISOString();
+  const parsed = parseStaffListSearch(new URL(request.url).searchParams);
+  if (!parsed.ok) {
+    return Response.json(
+      { error: parsed.error, generatedAt },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
+  const query = parsed.query;
+  const where = staffListPrismaWhere({ ...query, phone: undefined });
+  const orderBy = staffListOrderBy(query.sort);
+
+  try {
+    if (query.phone) {
+      const rows = await prisma.order.findMany({
+        where,
+        include: LIST_INCLUDE,
+        orderBy,
+        take: 2000,
+      });
+      const matched = rows.filter((row) =>
+        phoneDigitsMatch(row.phone, query.phone!),
+      );
+      const page = matched.slice(query.offset, query.offset + query.limit);
+      const nextOffset =
+        query.offset + page.length < matched.length
+          ? query.offset + query.limit
+          : null;
+      return Response.json(
+        {
+          generatedAt,
+          count: page.length,
+          orders: page.map((order) => toStaffOrderRow(order)),
+          nextOffset,
+        },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    const rows = await prisma.order.findMany({
+      where,
+      include: LIST_INCLUDE,
+      orderBy,
+      skip: query.offset,
+      take: query.limit + 1,
+    });
+    const hasMore = rows.length > query.limit;
+    const page = hasMore ? rows.slice(0, query.limit) : rows;
+    return Response.json(
+      {
+        generatedAt,
+        count: page.length,
+        orders: page.map((order) => toStaffOrderRow(order)),
+        nextOffset: hasMore ? query.offset + query.limit : null,
+      },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (err) {
+    console.error("Staff order list failed:", err);
+    return Response.json(
+      { error: "Could not list orders.", generatedAt },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+}
 
 function newAccessToken(): string {
   return randomBytes(24).toString("base64url");

@@ -22,8 +22,9 @@ export type StaffOrderRow = {
   fulfillmentType: "pickup" | "delivery";
   customerName: string;
   customerPhone: string | null;
+  customerEmail: string | null;
   placedAt: string;
-  items: Array<{ quantity: number; name: string }>;
+  items: Array<{ quantity: number; name: string; menuItemId: string }>;
 };
 
 type OrderLike = {
@@ -35,8 +36,9 @@ type OrderLike = {
   fulfillment: string;
   customerName: string;
   phone: string;
+  email?: string | null;
   createdAt: Date;
-  items: Array<{ quantity: number; name: string }>;
+  items: Array<{ quantity: number; name: string; menuItemId?: string }>;
 };
 
 export function staffPhone(phone: string): string | null {
@@ -57,12 +59,19 @@ export function toStaffOrderRow(order: OrderLike): StaffOrderRow {
     fulfillmentType: order.fulfillment === "delivery" ? "delivery" : "pickup",
     customerName: order.customerName,
     customerPhone: staffPhone(order.phone),
+    customerEmail: staffEmail(order.email),
     placedAt: order.createdAt.toISOString(),
     items: order.items.map((item) => ({
       quantity: item.quantity,
       name: item.name,
+      menuItemId: item.menuItemId ?? "",
     })),
   };
+}
+
+export function staffEmail(email: string | null | undefined): string | null {
+  const trimmed = (email ?? "").trim();
+  return trimmed || null;
 }
 
 const STATUS_BY_LABEL = Object.fromEntries(
