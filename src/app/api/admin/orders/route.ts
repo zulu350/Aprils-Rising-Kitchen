@@ -23,15 +23,36 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
-  const where =
+  const q = searchParams.get("q")?.trim() ?? "";
+  const statusWhere =
     status && status !== "all"
       ? { status }
       : status === "all"
         ? {}
         : { status: { notIn: ["completed", "cancelled"] } };
 
+  const digits = q.replace(/\D/g, "");
+  const searchWhere = q
+    ? {
+        OR: [
+          { customerName: { contains: q, mode: "insensitive" as const } },
+          { phone: { contains: q, mode: "insensitive" as const } },
+          ...(digits.length >= 4
+            ? [{ phone: { contains: digits, mode: "insensitive" as const } }]
+            : []),
+          { email: { contains: q, mode: "insensitive" as const } },
+          { orderNumber: { contains: q, mode: "insensitive" as const } },
+          {
+            items: {
+              some: { name: { contains: q, mode: "insensitive" as const } },
+            },
+          },
+        ],
+      }
+    : {};
+
   const orders = await prisma.order.findMany({
-    where,
+    where: { AND: [statusWhere, searchWhere] },
     include: { items: true },
     orderBy: [{ preferredDate: "asc" }, { createdAt: "desc" }],
   });

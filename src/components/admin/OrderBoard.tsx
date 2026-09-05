@@ -129,19 +129,26 @@ function formatPlaced(iso: string): string {
 export function OrderBoard() {
   const [filter, setFilter] = useState("active");
   const [sort, setSort] = useState<SortKey>("preferredDateUpcoming");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => window.clearTimeout(t);
+  }, [searchInput]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const q =
-        filter === "active"
-          ? ""
-          : `?status=${encodeURIComponent(filter)}`;
-      const res = await fetch(`/api/admin/orders${q}`);
+      const params = new URLSearchParams();
+      if (filter !== "active") params.set("status", filter);
+      if (search) params.set("q", search);
+      const qs = params.toString();
+      const res = await fetch(`/api/admin/orders${qs ? `?${qs}` : ""}`);
       if (res.status === 401) {
         window.location.href = "/admin/login";
         return;
@@ -158,7 +165,7 @@ export function OrderBoard() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, search]);
 
   useEffect(() => {
     void load();
@@ -202,7 +209,17 @@ export function OrderBoard() {
         </div>
       </div>
 
-      <div className="mb-6 flex flex-wrap items-center gap-2">
+      <div className="mb-6 flex flex-wrap items-end gap-3">
+        <label className="min-w-[16rem] flex-1 text-sm font-medium text-brown">
+          Search
+          <input
+            type="search"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Name, phone, order #, item…"
+            className="mt-1 w-full rounded-full border border-linen bg-cream px-4 py-2 text-sm font-normal text-espresso outline-none focus:border-crust focus:ring-2 focus:ring-crust/30"
+          />
+        </label>
         <label
           htmlFor="order-sort"
           className="text-sm font-medium text-brown"
@@ -233,7 +250,9 @@ export function OrderBoard() {
         <div className="rounded-2xl bg-cream p-8 text-center ring-1 ring-linen">
           <p className="font-display text-xl text-espresso">No orders here</p>
           <p className="mt-2 text-sm text-muted">
-            New customer orders will show up in Active.
+            {search
+              ? "Nothing matches that search in this tab. Try All to include completed orders."
+              : "New customer orders will show up in Active."}
           </p>
         </div>
       ) : (
