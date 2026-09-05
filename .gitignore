@@ -49,3 +49,8 @@ next-env.d.ts
 
 # Local reference images (not used by the live site)
 ark-assets/
+
+# Cloudflare Worker local secrets / state
+staff-relay/.dev.vars
+staff-relay/.wrangler/
+staff-relay/node_modules/

@@ -1,0 +1,3 @@
+# Local only. Copy to .dev.vars (gitignored). Never commit real values.
+STAFF_API_TOKEN=
+DESK_SHARED_SECRET=

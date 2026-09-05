@@ -1,0 +1,12 @@
+{
+  "name": "ark-staff-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-05",
+  "observability": {
+    "enabled": true,
+    "logs": { "head_sampling_rate": 1 }
+  },
+  "vars": {
+    "ORIGIN": "https://www.aprilsrisingkitchen.com"
+  }
+}
