@@ -6,10 +6,11 @@ import {
   ORDER_STATUSES,
   STATUS_COLORS,
   STATUS_LABELS,
+  compareUpcomingFulfillment,
   formatMoney,
   type OrderStatus,
 } from "@/lib/admin-orders";
-import { formatDateLabel } from "@/lib/availability";
+import { formatDateLabel, nowInBoise, toISODate } from "@/lib/availability";
 import { PAYMENT_METHOD_LABELS } from "@/lib/payment";
 
 type OrderRow = {
@@ -28,6 +29,7 @@ type OrderRow = {
 };
 
 type SortKey =
+  | "preferredDateUpcoming"
   | "preferredDateAsc"
   | "preferredDateDesc"
   | "placedDesc"
@@ -45,6 +47,10 @@ const FILTERS = [
 ];
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  {
+    value: "preferredDateUpcoming",
+    label: "Pickup/delivery (today & upcoming first)",
+  },
   { value: "preferredDateAsc", label: "Pickup/delivery date (soonest)" },
   { value: "preferredDateDesc", label: "Pickup/delivery date (latest)" },
   { value: "placedDesc", label: "Date placed (newest)" },
@@ -63,6 +69,17 @@ function sortOrders(orders: OrderRow[], sort: SortKey): OrderRow[] {
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
 
   switch (sort) {
+    case "preferredDateUpcoming": {
+      const today = toISODate(nowInBoise());
+      return list.sort(
+        (a, b) =>
+          compareUpcomingFulfillment(
+            a.preferredDate,
+            b.preferredDate,
+            today,
+          ) || byPlaced(b, a),
+      );
+    }
     case "preferredDateAsc":
       return list.sort(
         (a, b) =>
@@ -111,7 +128,7 @@ function formatPlaced(iso: string): string {
 
 export function OrderBoard() {
   const [filter, setFilter] = useState("active");
-  const [sort, setSort] = useState<SortKey>("preferredDateAsc");
+  const [sort, setSort] = useState<SortKey>("preferredDateUpcoming");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

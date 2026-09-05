@@ -44,3 +44,19 @@ export function formatMoney(cents: number): string {
     currency: "USD",
   }).format(cents / 100);
 }
+
+/**
+ * Kitchen queue: today and upcoming soonest-first, then overdue dates
+ * (most recent past first) so July leftovers don't bury today's bakes.
+ */
+export function compareUpcomingFulfillment(
+  aDate: string,
+  bDate: string,
+  today: string,
+): number {
+  const aPast = aDate < today;
+  const bPast = bDate < today;
+  if (aPast !== bPast) return aPast ? 1 : -1;
+  if (aPast) return bDate.localeCompare(aDate);
+  return aDate.localeCompare(bDate);
+}

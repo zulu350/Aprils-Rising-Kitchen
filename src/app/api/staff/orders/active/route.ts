@@ -1,3 +1,5 @@
+import { compareUpcomingFulfillment } from "@/lib/admin-orders";
+import { nowInBoise, toISODate } from "@/lib/availability";
 import { prisma } from "@/lib/db";
 import { toStaffOrderRow } from "@/lib/staff-orders";
 import {
@@ -24,7 +26,14 @@ export async function GET(request: Request) {
       orderBy: [{ preferredDate: "asc" }, { createdAt: "desc" }],
     });
 
-    const orders = rows.map((order) => toStaffOrderRow(order));
+    const today = toISODate(nowInBoise());
+    const orders = rows
+      .slice()
+      .sort((a, b) =>
+        compareUpcomingFulfillment(a.preferredDate, b.preferredDate, today) ||
+        b.createdAt.getTime() - a.createdAt.getTime(),
+      )
+      .map((order) => toStaffOrderRow(order));
 
     return Response.json(
       { generatedAt, count: orders.length, orders },
