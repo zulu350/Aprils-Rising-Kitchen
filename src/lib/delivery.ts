@@ -13,3 +13,16 @@ export function deliveryFeeCents(
   if (fulfillment !== "delivery") return 0;
   return subtotalCents >= FREE_DELIVERY_MIN_CENTS ? 0 : DELIVERY_FEE_CENTS;
 }
+
+/** Product + delivery + kitchen adjustment. Fee from the same rules as checkout. */
+export function quoteOrderTotals(
+  fulfillment: string,
+  subtotalCents: number,
+  adjustmentCents = 0,
+): { deliveryFeeCents: number; totalCents: number } {
+  const fee = deliveryFeeCents(fulfillment, subtotalCents);
+  return {
+    deliveryFeeCents: fee,
+    totalCents: subtotalCents + fee + adjustmentCents,
+  };
+}

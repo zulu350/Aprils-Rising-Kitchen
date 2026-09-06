@@ -5,8 +5,10 @@ import {
 } from "@/lib/admin-orders";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { deliveryFeeCents as calcDeliveryFee } from "@/lib/delivery";
+import { quoteOrderTotals } from "@/lib/delivery";
 import { sendOrderUpdatedEmail } from "@/lib/email";
+import { resolveFulfillmentPatch } from "@/lib/fulfillment-update";
+import { parseStaffPaymentMethodStored } from "@/lib/staff-payment-method";
 
 export const runtime = "nodejs";
 
@@ -23,6 +25,10 @@ type EditItemInput = {
 type PatchBody = {
   status?: string;
   paymentStatus?: string;
+  paymentMethod?: string | null;
+  fulfillment?: string;
+  deliveryCity?: string | null;
+  deliveryAddress?: string | null;
   /** Full replace of line items when provided */
   items?: EditItemInput[];
   notes?: string | null;
@@ -134,6 +140,31 @@ export async function PATCH(request: Request, { params }: Params) {
     }
     data.paymentStatus = body.paymentStatus;
   }
+  if (body.paymentMethod !== undefined) {
+    const parsed = parseStaffPaymentMethodStored(body.paymentMethod);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+    data.paymentMethod = parsed.value;
+    if (parsed.value !== "square") {
+      data.squareWallet = null;
+    }
+  }
+
+  const fulfillment = resolveFulfillmentPatch(existing, {
+    fulfillment: body.fulfillment,
+    deliveryCity: body.deliveryCity,
+    deliveryAddress: body.deliveryAddress,
+  });
+  if (!fulfillment.ok) {
+    return NextResponse.json({ error: fulfillment.error }, { status: 400 });
+  }
+  if (fulfillment.changed) {
+    data.fulfillment = fulfillment.value.fulfillment;
+    data.deliveryCity = fulfillment.value.deliveryCity;
+    data.deliveryAddress = fulfillment.value.deliveryAddress;
+    contentEdit = true;
+  }
 
   if (body.notes !== undefined) {
     data.notes = body.notes?.trim() || null;
@@ -228,16 +259,29 @@ export async function PATCH(request: Request, { params }: Params) {
           })),
         });
         const subtotalCents = items.reduce((s, i) => s + i.lineTotalCents, 0);
-        const deliveryFeeCents = calcDeliveryFee(
-          existing.fulfillment,
-          subtotalCents,
-        );
         data.subtotalCents = subtotalCents;
-        data.deliveryFeeCents = deliveryFeeCents;
-        data.totalCents = subtotalCents + deliveryFeeCents + adjustmentCents;
-      } else if (body.adjustmentCents !== undefined) {
-        data.totalCents =
-          existing.subtotalCents + existing.deliveryFeeCents + adjustmentCents;
+        const nextFulfillment =
+          (data.fulfillment as string | undefined) ?? existing.fulfillment;
+        const quoted = quoteOrderTotals(
+          nextFulfillment,
+          subtotalCents,
+          adjustmentCents,
+        );
+        data.deliveryFeeCents = quoted.deliveryFeeCents;
+        data.totalCents = quoted.totalCents;
+      } else if (
+        body.adjustmentCents !== undefined ||
+        fulfillment.changed
+      ) {
+        const nextFulfillment =
+          (data.fulfillment as string | undefined) ?? existing.fulfillment;
+        const quoted = quoteOrderTotals(
+          nextFulfillment,
+          existing.subtotalCents,
+          adjustmentCents,
+        );
+        data.deliveryFeeCents = quoted.deliveryFeeCents;
+        data.totalCents = quoted.totalCents;
       }
 
       return tx.order.update({

@@ -33,8 +33,11 @@ export type StaffOrderRow = {
   notes: string | null;
   preferredTimeWindow: string | null;
   total: number;
+  deliveryFee: number;
   fulfillmentDate: string;
   fulfillmentType: "pickup" | "delivery";
+  deliveryCity: string | null;
+  deliveryAddress: string | null;
   customerName: string;
   customerPhone: string | null;
   customerEmail: string | null;
@@ -51,8 +54,11 @@ type OrderLike = {
   notes?: string | null;
   preferredTimeWindow?: string | null;
   totalCents: number;
+  deliveryFeeCents?: number;
   preferredDate: string;
   fulfillment: string;
+  deliveryCity?: string | null;
+  deliveryAddress?: string | null;
   customerName: string;
   phone: string;
   email?: string | null;
@@ -78,8 +84,11 @@ export function toStaffOrderRow(order: OrderLike): StaffOrderRow {
     notes: staffText(order.notes),
     preferredTimeWindow: staffText(order.preferredTimeWindow),
     total: order.totalCents / 100,
+    deliveryFee: (order.deliveryFeeCents ?? 0) / 100,
     fulfillmentDate: order.preferredDate,
     fulfillmentType: order.fulfillment === "delivery" ? "delivery" : "pickup",
+    deliveryCity: staffText(order.deliveryCity),
+    deliveryAddress: staffText(order.deliveryAddress),
     customerName: order.customerName,
     customerPhone: staffPhone(order.phone),
     customerEmail: staffEmail(order.email),

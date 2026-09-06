@@ -91,6 +91,11 @@ export function OrderDetail({ id }: { id: string }) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
+  const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">(
+    "pickup",
+  );
+  const [deliveryCity, setDeliveryCity] = useState("Boise");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [adjustmentDollars, setAdjustmentDollars] = useState("0.00");
   const [adjustmentLabel, setAdjustmentLabel] = useState("");
   const [notifyCustomer, setNotifyCustomer] = useState(false);
@@ -125,6 +130,9 @@ export function OrderDetail({ id }: { id: string }) {
         setEmail(o.email || "");
         setPhone(o.phone && o.phone !== "—" ? o.phone : "");
         setPreferredDate(o.preferredDate || "");
+        setFulfillment(o.fulfillment === "delivery" ? "delivery" : "pickup");
+        setDeliveryCity(o.deliveryCity === "Meridian" ? "Meridian" : "Boise");
+        setDeliveryAddress(o.deliveryAddress || "");
         setAdjustmentDollars(centsToDollarsInput(o.adjustmentCents ?? 0));
         setAdjustmentLabel(o.adjustmentLabel || "");
         setNotifyCustomer(Boolean(o.email));
@@ -144,7 +152,7 @@ export function OrderDetail({ id }: { id: string }) {
     [lines],
   );
   const previewDeliveryFee = deliveryFeeCents(
-    order?.fulfillment ?? "pickup",
+    editing ? fulfillment : (order?.fulfillment ?? "pickup"),
     previewSubtotal,
   );
   const previewAdjustment = dollarsToCents(adjustmentDollars);
@@ -153,6 +161,7 @@ export function OrderDetail({ id }: { id: string }) {
   async function patch(body: {
     status?: OrderStatus;
     paymentStatus?: PaymentStatus;
+    paymentMethod?: string;
   }) {
     setSaving(true);
     setError("");
@@ -192,6 +201,10 @@ export function OrderDetail({ id }: { id: string }) {
         return;
       }
     }
+    if (fulfillment === "delivery" && !deliveryAddress.trim()) {
+      setError("Delivery needs an address.");
+      return;
+    }
 
     setSaving(true);
     setError("");
@@ -213,6 +226,10 @@ export function OrderDetail({ id }: { id: string }) {
           email: email.trim() || "",
           phone: phone.trim() || "—",
           preferredDate: preferredDate.trim() || undefined,
+          fulfillment,
+          deliveryCity: fulfillment === "delivery" ? deliveryCity : null,
+          deliveryAddress:
+            fulfillment === "delivery" ? deliveryAddress.trim() : null,
           adjustmentCents: dollarsToCents(adjustmentDollars),
           adjustmentLabel: adjustmentLabel.trim() || null,
           notifyCustomer: notifyCustomer && Boolean(email.trim()),
@@ -377,6 +394,28 @@ export function OrderDetail({ id }: { id: string }) {
           >
             Mark unpaid
           </button>
+        </div>
+        <p className="mt-4 text-xs font-semibold tracking-wide text-muted uppercase">
+          Payment method
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {(["cash", "venmo", "zelle", "square", "undecided"] as const).map(
+            (method) => (
+              <button
+                key={method}
+                type="button"
+                disabled={saving || order.paymentMethod === method}
+                onClick={() => void patch({ paymentMethod: method })}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
+                  order.paymentMethod === method
+                    ? "bg-espresso text-white"
+                    : "bg-white text-brown ring-1 ring-linen hover:bg-wheat"
+                }`}
+              >
+                {PAYMENT_METHOD_LABELS[method]}
+              </button>
+            ),
+          )}
         </div>
       </section>
 
@@ -741,6 +780,62 @@ export function OrderDetail({ id }: { id: string }) {
                 className="mt-1 w-full max-w-xs rounded-xl border border-linen bg-white px-3 py-2.5 text-sm tabular-nums"
               />
             </label>
+            <div className="space-y-3">
+              <span className="block text-sm font-medium text-brown">
+                Pickup or delivery
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    ["pickup", "Pickup"],
+                    ["delivery", "Delivery"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setFulfillment(value)}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                      fulfillment === value
+                        ? "bg-espresso text-white"
+                        : "bg-white text-brown ring-1 ring-linen"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {fulfillment === "delivery" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block text-sm">
+                    <span className="font-medium text-brown">City</span>
+                    <select
+                      value={deliveryCity}
+                      onChange={(e) => setDeliveryCity(e.target.value)}
+                      className="mt-1 w-full rounded-xl border border-linen bg-white px-3 py-2.5 text-sm"
+                    >
+                      <option value="Boise">Boise</option>
+                      <option value="Meridian">Meridian</option>
+                    </select>
+                  </label>
+                  <label className="block text-sm sm:col-span-2">
+                    <span className="font-medium text-brown">
+                      Street address
+                    </span>
+                    <textarea
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      rows={2}
+                      className="mt-1 w-full rounded-xl border border-linen bg-white px-3 py-2.5 text-sm"
+                    />
+                  </label>
+                </div>
+              ) : (
+                <p className="text-sm text-muted">
+                  Pickup — delivery address is cleared and no delivery fee.
+                </p>
+              )}
+            </div>
             <label className="block text-sm">
               <span className="font-medium text-brown">
                 Customer request notes
@@ -772,7 +867,7 @@ export function OrderDetail({ id }: { id: string }) {
                   {formatMoney(previewSubtotal)}
                 </span>
               </div>
-              {order.fulfillment === "delivery" ? (
+              {fulfillment === "delivery" ? (
                 <div className="mt-1 flex justify-between text-muted">
                   <span>Delivery</span>
                   <span className="tabular-nums">

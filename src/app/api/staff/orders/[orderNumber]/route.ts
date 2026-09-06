@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { resolveFulfillmentPatch } from "@/lib/fulfillment-update";
 import {
   parseStaffDate,
   parseStaffNotes,
@@ -24,6 +25,8 @@ type PatchBody = {
   paymentMethod?: unknown;
   fulfillmentDate?: unknown;
   fulfillmentType?: unknown;
+  deliveryCity?: unknown;
+  deliveryAddress?: unknown;
   customerPhone?: unknown;
   notes?: unknown;
   items?: unknown;
@@ -72,9 +75,10 @@ export async function GET(request: Request, { params }: Params) {
 }
 
 /**
- * Writes: status, Paid/Unpaid, paymentMethod, fulfillment date, phone, notes.
- * Unpaid does not clear paymentMethod (checkout often stores Unpaid · Venmo).
- * No item edits, no pickup↔delivery, no customer email, no notify email.
+ * Writes: status, Paid/Unpaid, paymentMethod, fulfillment date, pickup↔delivery
+ * (recalculates delivery fee), phone, notes.
+ * Unpaid does not clear paymentMethod. Pickup clears stored delivery address.
+ * No item edits, no customer email, no notify email.
  */
 export async function PATCH(request: Request, { params }: Params) {
   if (!isStaffAuthorized(request)) {
@@ -95,16 +99,6 @@ export async function PATCH(request: Request, { params }: Params) {
   if (body.items !== undefined) {
     return json(
       { error: "Item edits are not enabled on this endpoint.", generatedAt },
-      400,
-    );
-  }
-  if (body.fulfillmentType !== undefined) {
-    return json(
-      {
-        error:
-          "Changing pickup/delivery is not enabled on this endpoint.",
-        generatedAt,
-      },
       400,
     );
   }
@@ -145,17 +139,40 @@ export async function PATCH(request: Request, { params }: Params) {
     data.notes = parsed.value;
   }
 
-  if (Object.keys(data).length === 0) {
-    return json({ error: "Nothing to update.", generatedAt }, 400);
-  }
-
   try {
     const existing = await prisma.order.findUnique({
       where: { orderNumber },
-      select: { id: true },
+      select: {
+        id: true,
+        fulfillment: true,
+        deliveryCity: true,
+        deliveryAddress: true,
+        subtotalCents: true,
+        adjustmentCents: true,
+      },
     });
     if (!existing) {
       return json({ error: "Order not found.", generatedAt }, 404);
+    }
+
+    const fulfillment = resolveFulfillmentPatch(existing, {
+      fulfillmentType: body.fulfillmentType,
+      deliveryCity: body.deliveryCity,
+      deliveryAddress: body.deliveryAddress,
+    });
+    if (!fulfillment.ok) {
+      return json({ error: fulfillment.error, generatedAt }, 400);
+    }
+    if (fulfillment.changed) {
+      data.fulfillment = fulfillment.value.fulfillment;
+      data.deliveryCity = fulfillment.value.deliveryCity;
+      data.deliveryAddress = fulfillment.value.deliveryAddress;
+      data.deliveryFeeCents = fulfillment.value.deliveryFeeCents;
+      data.totalCents = fulfillment.value.totalCents;
+    }
+
+    if (Object.keys(data).length === 0) {
+      return json({ error: "Nothing to update.", generatedAt }, 400);
     }
 
     const order = await prisma.order.update({
