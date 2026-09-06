@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "staff-relay"]
+  "exclude": ["node_modules", "staff-relay", "**/*.test.ts"]
 }

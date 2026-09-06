@@ -12,11 +12,26 @@ import {
   type AdminCreateOrderInput,
   type CartLineInput,
 } from "@/lib/orders";
+import {
+  STAFF_PAYMENT_STATUS_ERROR,
+  looksLikePaymentMethod,
+  parseStaffPaymentMethodStored,
+  staffPaymentMethodLabel,
+  type StaffPaymentMethod,
+} from "@/lib/staff-payment-method";
+
+export type { StaffPaymentMethod } from "@/lib/staff-payment-method";
 
 export type StaffOrderRow = {
   id: string;
   status: string;
   payment: "Paid" | "Unpaid";
+  /** Venmo | Zelle | Square | Cash, or null if unset (undecided). */
+  paymentMethod: string | null;
+  /** apple_pay | google_pay | card when paid/chosen via Square; else null. */
+  squareWallet: string | null;
+  notes: string | null;
+  preferredTimeWindow: string | null;
   total: number;
   fulfillmentDate: string;
   fulfillmentType: "pickup" | "delivery";
@@ -31,6 +46,10 @@ type OrderLike = {
   orderNumber: string;
   status: string;
   paymentStatus: string;
+  paymentMethod?: string | null;
+  squareWallet?: string | null;
+  notes?: string | null;
+  preferredTimeWindow?: string | null;
   totalCents: number;
   preferredDate: string;
   fulfillment: string;
@@ -54,6 +73,10 @@ export function toStaffOrderRow(order: OrderLike): StaffOrderRow {
       ? STATUS_LABELS[order.status]
       : order.status,
     payment: order.paymentStatus === "paid" ? "Paid" : "Unpaid",
+    paymentMethod: staffPaymentMethodLabel(order.paymentMethod),
+    squareWallet: order.squareWallet?.trim() || null,
+    notes: staffText(order.notes),
+    preferredTimeWindow: staffText(order.preferredTimeWindow),
     total: order.totalCents / 100,
     fulfillmentDate: order.preferredDate,
     fulfillmentType: order.fulfillment === "delivery" ? "delivery" : "pickup",
@@ -69,9 +92,13 @@ export function toStaffOrderRow(order: OrderLike): StaffOrderRow {
   };
 }
 
-export function staffEmail(email: string | null | undefined): string | null {
-  const trimmed = (email ?? "").trim();
+export function staffText(value: string | null | undefined): string | null {
+  const trimmed = (value ?? "").trim();
   return trimmed || null;
+}
+
+export function staffEmail(email: string | null | undefined): string | null {
+  return staffText(email);
 }
 
 const STATUS_BY_LABEL = Object.fromEntries(
@@ -99,11 +126,14 @@ export function parseStaffPayment(
   raw: unknown,
 ): { ok: true; value: PaymentStatus } | { ok: false; error: string } {
   if (typeof raw !== "string" || !raw.trim()) {
-    return { ok: false, error: "payment must be Paid or Unpaid." };
+    return { ok: false, error: STAFF_PAYMENT_STATUS_ERROR };
   }
   const key = raw.trim().toLowerCase();
   if (key === "paid" || key === "unpaid") return { ok: true, value: key };
-  return { ok: false, error: "payment must be Paid or Unpaid." };
+  if (looksLikePaymentMethod(raw)) {
+    return { ok: false, error: STAFF_PAYMENT_STATUS_ERROR };
+  }
+  return { ok: false, error: STAFF_PAYMENT_STATUS_ERROR };
 }
 
 export function parseStaffDate(
@@ -140,36 +170,20 @@ export function parseStaffNotes(
   return { ok: true, value: raw.trim() || null };
 }
 
-const PAYMENT_METHODS = [
-  "cash",
-  "venmo",
-  "zelle",
-  "square",
-  "undecided",
-] as const;
-
-export type StaffPaymentMethod = (typeof PAYMENT_METHODS)[number];
-
 export function parseStaffPaymentMethod(
   raw: unknown,
 ): { ok: true; value: StaffPaymentMethod } | { ok: false; error: string } {
   if (raw === undefined || raw === null || raw === "") {
     return { ok: true, value: "cash" };
   }
-  if (typeof raw !== "string") {
-    return {
-      ok: false,
-      error: "paymentMethod must be cash, venmo, zelle, square, or undecided.",
-    };
-  }
-  const key = raw.trim().toLowerCase();
-  if ((PAYMENT_METHODS as readonly string[]).includes(key)) {
-    return { ok: true, value: key as StaffPaymentMethod };
-  }
-  return {
-    ok: false,
-    error: "paymentMethod must be cash, venmo, zelle, square, or undecided.",
-  };
+  return parseStaffPaymentMethodStored(raw);
+}
+
+/** PATCH: omitted is handled by caller; empty/null clears to undecided. */
+export function parseStaffPaymentMethodPatch(
+  raw: unknown,
+): { ok: true; value: StaffPaymentMethod } | { ok: false; error: string } {
+  return parseStaffPaymentMethodStored(raw);
 }
 
 export type StaffCreateBody = {
@@ -205,7 +219,7 @@ export type StaffCreateQuote = {
     fulfillmentType: "pickup" | "delivery";
     fulfillmentDate: string;
     payment: "Paid" | "Unpaid";
-    paymentMethod: StaffPaymentMethod;
+    paymentMethod: string | null;
     items: Array<{
       menuItemId: string;
       name: string;
@@ -217,6 +231,7 @@ export type StaffCreateQuote = {
     deliveryFee: number;
     total: number;
     notes: string | null;
+    preferredTimeWindow: string | null;
     deliveryCity: string | null;
     deliveryAddress: string | null;
   };
@@ -326,7 +341,7 @@ export function quoteStaffCreate(
         fulfillmentType: input.fulfillment,
         fulfillmentDate: result.preferredDate,
         payment: result.paymentStatus === "paid" ? "Paid" : "Unpaid",
-        paymentMethod: method.value,
+        paymentMethod: staffPaymentMethodLabel(method.value),
         items: result.lines.map((line) => ({
           menuItemId: line.item.id,
           name: line.item.name,
@@ -338,6 +353,7 @@ export function quoteStaffCreate(
         deliveryFee: feeCents / 100,
         total: totalCents / 100,
         notes: input.notes?.trim() || null,
+        preferredTimeWindow: input.preferredTimeWindow?.trim() || null,
         deliveryCity: input.deliveryCity ?? null,
         deliveryAddress: input.deliveryAddress ?? null,
       },

@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     const rows = await prisma.order.findMany({
       where: { status: { notIn: ["completed", "cancelled"] } },
       include: {
-        items: { select: { quantity: true, name: true } },
+        items: { select: { quantity: true, name: true, menuItemId: true } },
       },
       orderBy: [{ preferredDate: "asc" }, { createdAt: "desc" }],
     });

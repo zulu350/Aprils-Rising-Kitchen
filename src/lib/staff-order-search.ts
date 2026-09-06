@@ -1,5 +1,10 @@
 import { Prisma } from "@/generated/prisma/client";
-import { parseStaffPayment, parseStaffStatus } from "@/lib/staff-orders";
+import {
+  parseStaffPayment,
+  parseStaffPaymentMethodPatch,
+  parseStaffStatus,
+} from "@/lib/staff-orders";
+import type { StaffPaymentMethod } from "@/lib/staff-payment-method";
 
 export const STAFF_LIST_DEFAULT_LIMIT = 50;
 export const STAFF_LIST_MAX_LIMIT = 100;
@@ -19,6 +24,7 @@ export type StaffListQuery = {
   menuItemId?: string;
   statuses?: string[];
   payment?: "paid" | "unpaid";
+  paymentMethod?: StaffPaymentMethod;
   fulfillmentType?: "pickup" | "delivery";
   from?: string;
   to?: string;
@@ -91,6 +97,14 @@ export function parseStaffListSearch(
     payment = parsed.value;
   }
 
+  let paymentMethod: StaffPaymentMethod | undefined;
+  const paymentMethodRaw = search.get("paymentMethod");
+  if (paymentMethodRaw !== null && paymentMethodRaw.trim() !== "") {
+    const parsed = parseStaffPaymentMethodPatch(paymentMethodRaw);
+    if (!parsed.ok) return parsed;
+    paymentMethod = parsed.value;
+  }
+
   const fulfillmentRaw = search.get("fulfillmentType")?.trim().toLowerCase();
   if (
     fulfillmentRaw &&
@@ -156,6 +170,7 @@ export function parseStaffListSearch(
       menuItemId: search.get("menuItemId")?.trim() || undefined,
       statuses: statuses.length ? statuses : undefined,
       payment,
+      paymentMethod,
       fulfillmentType:
         fulfillmentRaw === "pickup" || fulfillmentRaw === "delivery"
           ? fulfillmentRaw
@@ -220,6 +235,9 @@ export function staffListPrismaWhere(
   }
   if (query.payment) {
     and.push({ paymentStatus: query.payment });
+  }
+  if (query.paymentMethod) {
+    and.push({ paymentMethod: query.paymentMethod });
   }
   if (query.fulfillmentType) {
     and.push({ fulfillment: query.fulfillmentType });

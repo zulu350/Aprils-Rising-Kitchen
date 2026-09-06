@@ -3,6 +3,7 @@ import {
   parseStaffDate,
   parseStaffNotes,
   parseStaffPayment,
+  parseStaffPaymentMethodPatch,
   parseStaffPhone,
   parseStaffStatus,
   toStaffOrderRow,
@@ -20,6 +21,7 @@ type Params = { params: Promise<{ orderNumber: string }> };
 type PatchBody = {
   status?: unknown;
   payment?: unknown;
+  paymentMethod?: unknown;
   fulfillmentDate?: unknown;
   fulfillmentType?: unknown;
   customerPhone?: unknown;
@@ -41,7 +43,9 @@ function normalizeOrderNumber(raw: string): string {
 async function findByOrderNumber(orderNumber: string) {
   return prisma.order.findUnique({
     where: { orderNumber },
-    include: { items: { select: { quantity: true, name: true } } },
+    include: {
+      items: { select: { quantity: true, name: true, menuItemId: true } },
+    },
   });
 }
 
@@ -68,8 +72,9 @@ export async function GET(request: Request, { params }: Params) {
 }
 
 /**
- * 2a writes only: status, Paid/Unpaid, fulfillment date, phone, notes.
- * No item edits, no pickup↔delivery, no customer email.
+ * Writes: status, Paid/Unpaid, paymentMethod, fulfillment date, phone, notes.
+ * Unpaid does not clear paymentMethod (checkout often stores Unpaid · Venmo).
+ * No item edits, no pickup↔delivery, no customer email, no notify email.
  */
 export async function PATCH(request: Request, { params }: Params) {
   if (!isStaffAuthorized(request)) {
@@ -126,6 +131,14 @@ export async function PATCH(request: Request, { params }: Params) {
     if (!parsed.ok) return json({ error: parsed.error, generatedAt }, 400);
     data.phone = parsed.value;
   }
+  if (body.paymentMethod !== undefined) {
+    const parsed = parseStaffPaymentMethodPatch(body.paymentMethod);
+    if (!parsed.ok) return json({ error: parsed.error, generatedAt }, 400);
+    data.paymentMethod = parsed.value;
+    if (parsed.value !== "square") {
+      data.squareWallet = null;
+    }
+  }
   if (body.notes !== undefined) {
     const parsed = parseStaffNotes(body.notes);
     if (!parsed.ok) return json({ error: parsed.error, generatedAt }, 400);
@@ -148,7 +161,9 @@ export async function PATCH(request: Request, { params }: Params) {
     const order = await prisma.order.update({
       where: { orderNumber },
       data,
-      include: { items: { select: { quantity: true, name: true } } },
+      include: {
+        items: { select: { quantity: true, name: true, menuItemId: true } },
+      },
     });
 
     return json({
