@@ -3,7 +3,7 @@ import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Providers } from "@/components/Providers";
-import { BUSINESS } from "@/lib/constants";
+import { BUSINESS, SITE_URL } from "@/lib/constants";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -20,9 +20,8 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: new URL(SITE_URL),
+  alternates: { canonical: "/" },
   title: {
     default: `${BUSINESS.name} — Fresh Baked Bread in Boise`,
     template: `%s · ${BUSINESS.name}`,
@@ -33,6 +32,7 @@ export const metadata: Metadata = {
     title: BUSINESS.name,
     description:
       "Handcrafted sourdough and Filipino-inspired rolls, baked fresh to order in Boise, Idaho.",
+    url: SITE_URL,
     images: ["/images/card.jpg"],
     type: "website",
   },

@@ -4,7 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReviewInvite } from "@/components/ReviewInvite";
-import { BUSINESS } from "@/lib/constants";
+import {
+  BUSINESS,
+  COTTAGE_LINE,
+  PAYMENTS_LINE,
+} from "@/lib/constants";
 
 export function Footer() {
   const pathname = usePathname();
@@ -84,12 +88,17 @@ export function Footer() {
               </a>
             </li>
             <li className="pt-2 text-muted">
-              Delivery in {BUSINESS.serviceArea}
+              Pickup &amp; delivery 1:00–5:00 PM that day ·{" "}
+              {BUSINESS.serviceArea}
             </li>
-            <li className="text-muted">
-              Mon–Fri · 1:00–5:00 PM · pickup &amp; delivery
+            <li className="text-muted">Questions: Monday–Friday</li>
+            <li className="text-muted">{PAYMENTS_LINE}</li>
+            <li className="pt-2 text-muted">{COTTAGE_LINE}</li>
+            <li>
+              <Link href="/privacy" className="hover:text-crust-dark">
+                Privacy
+              </Link>
             </li>
-            <li className="text-muted">Cash · Venmo · Zelle</li>
             <li className="pt-3">
               <ReviewInvite variant="footer" />
             </li>

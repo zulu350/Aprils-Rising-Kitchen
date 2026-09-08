@@ -15,7 +15,7 @@ export const CUTOFF_HOUR = 17; // 5:00 PM
 
 export const MESSAGING = {
   hours:
-    "We're here for you Monday–Friday, 1:00–5:00 PM (Mountain Time).",
+    "Questions Monday–Friday. Pickup and delivery 1:00–5:00 PM on your chosen day.",
   fulfillmentWindow:
     "Pickup and delivery are scheduled between 1:00 PM and 5:00 PM on your chosen day.",
   sourdoughTitle: "Sourdough bake days",

@@ -16,12 +16,11 @@ export default function HomePage() {
             className="object-cover"
             sizes="100vw"
           />
-          {/* Light wash only — copy sits on its own solid card for contrast */}
-          <div className="absolute inset-0 bg-gradient-to-r from-espresso/45 via-espresso/15 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-espresso/35 via-transparent to-espresso/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-espresso/30 via-espresso/5 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-espresso/25 via-transparent to-espresso/5" />
         </div>
         <div className="relative mx-auto flex min-h-[72vh] max-w-6xl flex-col justify-end px-4 pb-16 pt-28 sm:px-6 sm:pb-20 md:justify-center md:pt-24">
-          <div className="max-w-2xl rounded-2xl bg-espresso/92 p-6 shadow-2xl ring-1 ring-white/10 sm:p-8">
+          <div className="max-w-xl rounded-2xl bg-espresso/80 p-6 shadow-2xl ring-1 ring-white/10 backdrop-blur-[2px] sm:p-8">
             <p className="mb-3 text-sm font-medium tracking-wide text-crust uppercase">
               {BUSINESS.tagline}
             </p>
@@ -33,7 +32,7 @@ export default function HomePage() {
               treats — handcrafted in small batches and made fresh to order for
               your table.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
               <Link
                 href="/menu"
                 className="rounded-full bg-crust px-6 py-3 text-sm font-semibold text-espresso shadow-md transition hover:bg-wheat"
@@ -42,7 +41,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/contact"
-                className="rounded-full bg-crust px-6 py-3 text-sm font-semibold text-espresso shadow-md transition hover:bg-wheat"
+                className="text-sm font-medium text-white/90 underline decoration-crust underline-offset-4 hover:text-white"
               >
                 Contact us
               </Link>

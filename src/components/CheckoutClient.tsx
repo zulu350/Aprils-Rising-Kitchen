@@ -164,9 +164,7 @@ export function CheckoutClient() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="font-display text-4xl text-espresso">Checkout</h1>
       <p className="mt-2 text-sm text-muted">
-        No tax. Cash, Venmo, or Zelle.
-        <br />
-        Card, Google Pay, or Apple Pay if you prefer.
+        No tax. Cash, Venmo, Zelle, or card / Apple Pay / Google Pay.
         {availMsg?.hours ? (
           <>
             <br />
@@ -203,7 +201,7 @@ export function CheckoutClient() {
             <label className="block text-sm">
               <span className="font-medium text-brown">Email</span>
               <span className="ml-1 text-xs font-normal text-muted">
-                (optional — for order confirmation)
+                (optional — receipt and order-status link)
               </span>
               <input
                 name="email"
@@ -214,6 +212,9 @@ export function CheckoutClient() {
             </label>
             <label className="block text-sm">
               <span className="font-medium text-brown">Phone *</span>
+              <span className="ml-1 text-xs font-normal text-muted">
+                (required for pickup or delivery that day — not for marketing)
+              </span>
               <input
                 name="phone"
                 type="tel"
@@ -364,9 +365,7 @@ export function CheckoutClient() {
               Payment preference
             </legend>
             <p className="text-sm text-muted">
-              Cash, Venmo, or Zelle.
-              <br />
-              Card, Google Pay, or Apple Pay if you prefer.
+              Cash, Venmo, Zelle, or card / Apple Pay / Google Pay.
             </p>
             <select
               name="paymentMethod"

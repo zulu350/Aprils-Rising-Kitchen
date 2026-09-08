@@ -10,6 +10,7 @@ import {
   type MenuCategory,
   type MenuItem,
 } from "@/data/menu";
+import { HoursCopy } from "@/components/HoursCopy";
 import { useCart } from "@/lib/cart";
 
 const CATEGORIES: MenuCategory[] = ["sourdough", "rolls"];
@@ -38,6 +39,9 @@ function MenuItemRow({ item }: { item: MenuItem }) {
             </span>
           </span>
         </div>
+        {item.description ? (
+          <p className="mt-1 text-sm text-brown">{item.description}</p>
+        ) : null}
         <p className="mt-1 text-xs text-muted">
           {item.category === "sourdough"
             ? "Wed & Fri bake days · order by Mon/Wed 5 PM cutoffs"
@@ -94,18 +98,7 @@ export function MenuClient() {
           </p>
           <div className="mt-5 rounded-2xl bg-cream/80 px-4 py-3 text-sm leading-relaxed text-brown ring-1 ring-linen">
             <p className="font-medium text-espresso">Bake days &amp; hours</p>
-            <p className="mt-1">
-              Sourdough loaves: Wednesday &amp; Friday only. Please order by
-              Monday 5:00 PM for Wednesday, or Wednesday 5:00 PM for Friday.
-            </p>
-            <p className="mt-1">
-              Rolls &amp; treats: Monday–Friday with about 24 hours&apos; notice
-              when ordered without loaves.
-            </p>
-            <p className="mt-1 text-muted">
-              Pickup &amp; delivery 1:00–5:00 PM · Open Monday–Friday for
-              questions and orders.
-            </p>
+            <HoursCopy className="mt-1 text-brown" />
           </div>
           <div className="mt-6 flex flex-wrap gap-2">
             {(

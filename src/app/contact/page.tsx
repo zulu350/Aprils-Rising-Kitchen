@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { BUSINESS } from "@/lib/constants";
+import Link from "next/link";
+import { HoursCopy } from "@/components/HoursCopy";
+import {
+  BUSINESS,
+  COTTAGE_LINE,
+  PAYMENTS_LINE,
+} from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -13,8 +19,11 @@ export default function ContactPage() {
       </p>
       <h1 className="mt-2 font-display text-4xl text-espresso">Contact</h1>
       <p className="mt-4 max-w-xl leading-relaxed text-brown">
-        Questions, custom requests, or ready to order by phone? We&apos;re happy
-        to help.
+        Orders go through the{" "}
+        <Link href="/menu" className="font-medium text-espresso underline decoration-crust">
+          menu
+        </Link>
+        . Call or text for questions and custom requests.
       </p>
       <ul className="mt-8 space-y-4 rounded-2xl bg-wheat p-6 ring-1 ring-linen">
         <li>
@@ -27,6 +36,7 @@ export default function ContactPage() {
           >
             {BUSINESS.phone}
           </a>
+          <span className="mt-1 block text-sm text-muted">Call or text</span>
         </li>
         <li>
           <span className="block text-xs font-semibold tracking-wide text-muted uppercase">
@@ -52,10 +62,10 @@ export default function ContactPage() {
             April&apos;s Rising Kitchen
           </a>
         </li>
-        <li className="pt-2 text-sm text-muted">
-          {BUSINESS.publicHours}. Pickup &amp; delivery{" "}
-          {BUSINESS.fulfillmentHours} in {BUSINESS.serviceArea}. Cash, Venmo,
-          or Zelle accepted.
+        <li className="pt-2 text-sm leading-relaxed text-muted">
+          <HoursCopy />
+          <p className="mt-2">{PAYMENTS_LINE}</p>
+          <p className="mt-2">{COTTAGE_LINE}</p>
         </li>
       </ul>
     </div>

@@ -86,6 +86,7 @@ export const menuItems: MenuItem[] = [
     unitLabel: "loaf",
     priceCents: 1000,
     leadTimeHours: 48,
+    description: "Fennel seed and amaranth grain.",
     available: true,
   },
   {
@@ -151,6 +152,7 @@ export const menuItems: MenuItem[] = [
     unitLabel: "dozen",
     priceCents: 2000,
     leadTimeHours: 24,
+    description: "Moringa (malunggay) in the dough.",
     available: true,
   },
   {
@@ -169,6 +171,7 @@ export const menuItems: MenuItem[] = [
     unitLabel: "dozen",
     priceCents: 2500,
     leadTimeHours: 24,
+    description: "Ube dough with cheese filling.",
     available: true,
   },
   {
@@ -178,6 +181,7 @@ export const menuItems: MenuItem[] = [
     unitLabel: "dozen",
     priceCents: 2500,
     leadTimeHours: 24,
+    description: "Ube dough with cream cheese filling.",
     available: true,
   },
   {
@@ -214,6 +218,7 @@ export const menuItems: MenuItem[] = [
     unitLabel: "dozen",
     priceCents: 2500,
     leadTimeHours: 24,
+    description: "A mixed dozen of three flavors.",
     available: true,
   },
 
@@ -261,6 +266,7 @@ export const menuItems: MenuItem[] = [
     unitLabel: "dozen",
     priceCents: 2500,
     leadTimeHours: 24,
+    description: "A mixed dozen of three flavors.",
     available: true,
   },
 

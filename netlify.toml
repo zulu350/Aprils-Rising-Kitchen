@@ -9,3 +9,10 @@
 # Set these in Netlify UI → Site settings → Environment variables:
 # DATABASE_URL, ADMIN_PASSWORD, SESSION_SECRET, PICKUP_ADDRESS,
 # NEXT_PUBLIC_SITE_URL, and optional SMTP_* / ORDER_NOTIFY_EMAIL
+
+# Canonical host is www. Send the Netlify subdomain there.
+[[redirects]]
+  from = "https://aprilsrisingkitchen.netlify.app/*"
+  to = "https://www.aprilsrisingkitchen.com/:splat"
+  status = 301
+  force = true
