@@ -3,8 +3,8 @@ export const BUSINESS = {
   shortName: "ARK",
   tagline: "Small-batch home bakery · Boise, Idaho",
   email: "info@aprilsrisingkitchen.com",
-  phone: "208-352-2634",
-  phoneHref: "tel:+12083522634",
+  phone: "360-383-7464",
+  phoneHref: "tel:+13603837464",
   facebook:
     "https://www.facebook.com/share/1BcSvb4rRz/?mibextid=wwXIfr",
   /** Google Maps / Business review short link */
