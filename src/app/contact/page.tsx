@@ -36,7 +36,6 @@ export default function ContactPage() {
           >
             {BUSINESS.phone}
           </a>
-          <span className="mt-1 block text-sm text-muted">Call or text</span>
         </li>
         <li>
           <span className="block text-xs font-semibold tracking-wide text-muted uppercase">
