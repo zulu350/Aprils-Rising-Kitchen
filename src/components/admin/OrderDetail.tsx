@@ -361,32 +361,6 @@ export function OrderDetail({ id }: { id: string }) {
         </p>
       </div>
 
-      {order.fulfillment === "delivery" ? (
-        <MileagePanel
-          orderId={order.id}
-          deliveryCity={order.deliveryCity}
-          deliveryAddress={order.deliveryAddress}
-          deliveryMiles={order.deliveryMiles ?? null}
-          milesFrom={order.milesFrom ?? null}
-          returnMiles={order.returnMiles ?? null}
-          homeConfigured={homeConfigured}
-          homeAddress={homeAddress}
-          lastStop={lastStop}
-          onSaved={(next) => {
-            setOrder((current) =>
-              current
-                ? {
-                    ...current,
-                    ...next,
-                  }
-                : current,
-            );
-          }}
-          onError={setError}
-          onInfo={setInfo}
-        />
-      ) : null}
-
       {error ? (
         <p className="text-sm text-red-700" role="alert">
           {error}
@@ -464,6 +438,32 @@ export function OrderDetail({ id }: { id: string }) {
           )}
         </div>
       </section>
+
+      {order.fulfillment === "delivery" ? (
+        <MileagePanel
+          orderId={order.id}
+          deliveryCity={order.deliveryCity}
+          deliveryAddress={order.deliveryAddress}
+          deliveryMiles={order.deliveryMiles ?? null}
+          milesFrom={order.milesFrom ?? null}
+          returnMiles={order.returnMiles ?? null}
+          homeConfigured={homeConfigured}
+          homeAddress={homeAddress}
+          lastStop={lastStop}
+          onSaved={(next) => {
+            setOrder((current) =>
+              current
+                ? {
+                    ...current,
+                    ...next,
+                  }
+                : current,
+            );
+          }}
+          onError={setError}
+          onInfo={setInfo}
+        />
+      ) : null}
 
       <section className="grid gap-4 rounded-2xl bg-cream p-5 ring-1 ring-linen sm:grid-cols-2">
         <div>

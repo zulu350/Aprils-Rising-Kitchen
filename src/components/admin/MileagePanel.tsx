@@ -214,10 +214,22 @@ export function MileagePanel({
     }
   }
 
+  const milesSummary = [
+    deliveryMiles != null ? `${deliveryMiles} mi` : null,
+    returnMiles != null ? `return ${returnMiles}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <section className="rounded-2xl bg-wheat p-4 ring-1 ring-linen sm:p-5">
-      <h3 className="font-display text-xl text-espresso">Delivery miles</h3>
-      <p className="mt-1 text-sm text-muted">
+    <details className="rounded-2xl bg-wheat p-4 ring-1 ring-linen sm:p-5">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 font-display text-xl text-espresso [&::-webkit-details-marker]:hidden">
+        <span>Delivery miles</span>
+        <span className="text-sm font-sans font-medium text-muted">
+          {milesSummary || "Tap to log"}
+        </span>
+      </summary>
+      <p className="mt-3 text-sm text-muted">
         Tap From, then Estimate. Change the number if this run was not a
         straight bakery trip.
       </p>
@@ -345,6 +357,6 @@ export function MileagePanel({
           {busy === "return-save" ? "Saving…" : "Save return"}
         </button>
       </div>
-    </section>
+    </details>
   );
 }
