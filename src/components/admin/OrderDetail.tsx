@@ -415,28 +415,36 @@ export function OrderDetail({ id }: { id: string }) {
             Mark unpaid
           </button>
         </div>
-        <p className="mt-4 text-xs font-semibold tracking-wide text-muted uppercase">
-          Payment method
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {(["cash", "venmo", "zelle", "square", "undecided"] as const).map(
-            (method) => (
-              <button
-                key={method}
-                type="button"
-                disabled={saving || order.paymentMethod === method}
-                onClick={() => void patch({ paymentMethod: method })}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
-                  order.paymentMethod === method
-                    ? "bg-espresso text-white"
-                    : "bg-white text-brown ring-1 ring-linen hover:bg-wheat"
-                }`}
-              >
-                {PAYMENT_METHOD_LABELS[method]}
-              </button>
-            ),
-          )}
-        </div>
+        <details className="mt-4 border-t border-linen pt-3">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-espresso [&::-webkit-details-marker]:hidden">
+            <span>Payment method</span>
+            <span className="font-medium text-muted">
+              {order.paymentMethod === "square"
+                ? squareMethodLabel(order.squareWallet)
+                : (PAYMENT_METHOD_LABELS[order.paymentMethod] ??
+                  order.paymentMethod)}
+            </span>
+          </summary>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(["cash", "venmo", "zelle", "square", "undecided"] as const).map(
+              (method) => (
+                <button
+                  key={method}
+                  type="button"
+                  disabled={saving || order.paymentMethod === method}
+                  onClick={() => void patch({ paymentMethod: method })}
+                  className={`rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
+                    order.paymentMethod === method
+                      ? "bg-espresso text-white"
+                      : "bg-white text-brown ring-1 ring-linen hover:bg-wheat"
+                  }`}
+                >
+                  {PAYMENT_METHOD_LABELS[method]}
+                </button>
+              ),
+            )}
+          </div>
+        </details>
       </section>
 
       {order.fulfillment === "delivery" ? (

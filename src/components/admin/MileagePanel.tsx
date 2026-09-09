@@ -22,6 +22,52 @@ function mapsDir(origin: string, destination: string): string {
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
+function wazeNav(destination: string): string {
+  const params = new URLSearchParams({
+    q: destination,
+    navigate: "yes",
+  });
+  return `https://waze.com/ul?${params.toString()}`;
+}
+
+function NavApps({
+  mapsHref,
+  wazeHref,
+}: {
+  mapsHref: string | null;
+  wazeHref: string | null;
+}) {
+  if (!mapsHref && !wazeHref) return null;
+  const linkClass =
+    "flex min-h-12 items-center justify-center rounded-full bg-white px-3 py-3 text-base font-semibold text-espresso ring-1 ring-linen";
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {mapsHref ? (
+        <a
+          href={mapsHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClass}
+        >
+          Maps
+        </a>
+      ) : (
+        <span />
+      )}
+      {wazeHref ? (
+        <a
+          href={wazeHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClass}
+        >
+          Waze
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
 export type MileageLastStop = {
   id: string;
   orderNumber: string;
@@ -90,6 +136,8 @@ export function MileagePanel({
         : null;
   const returnMapsHref =
     dest && homeAddress ? mapsDir(dest, homeAddress) : null;
+  const wazeHref = dest ? wazeNav(dest) : null;
+  const returnWazeHref = homeAddress ? wazeNav(homeAddress) : null;
 
   async function estimate() {
     setBusy("estimate");
@@ -281,25 +329,16 @@ export function MileagePanel({
         </button>
       </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => void estimate()}
-          disabled={busy !== null || !dest}
-          className="min-h-12 rounded-full bg-crust-dark px-4 py-3.5 text-base font-semibold text-white disabled:opacity-50"
-        >
-          {busy === "estimate" ? "Estimating…" : "Estimate miles"}
-        </button>
-        {mapsHref ? (
-          <a
-            href={mapsHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-h-12 items-center justify-center rounded-full bg-white px-4 py-3.5 text-base font-semibold text-espresso ring-1 ring-linen"
-          >
-            Open Maps
-          </a>
-        ) : null}
+      <button
+        type="button"
+        onClick={() => void estimate()}
+        disabled={busy !== null || !dest}
+        className="mt-3 min-h-12 w-full rounded-full bg-crust-dark px-4 py-3.5 text-base font-semibold text-white disabled:opacity-50"
+      >
+        {busy === "estimate" ? "Estimating…" : "Estimate miles"}
+      </button>
+      <div className="mt-2">
+        <NavApps mapsHref={mapsHref} wazeHref={wazeHref} />
       </div>
 
       <label className="mt-4 block text-sm">
@@ -340,27 +379,16 @@ export function MileagePanel({
           Only on the final delivery. Estimates this address back to the
           bakery.
         </p>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => void estimateReturn()}
-            disabled={busy !== null || !homeConfigured || !dest}
-            className="min-h-12 rounded-full bg-crust-dark px-4 py-3.5 text-base font-semibold text-white disabled:opacity-50"
-          >
-            {busy === "return-estimate"
-              ? "Estimating…"
-              : "Return to bakery"}
-          </button>
-          {returnMapsHref ? (
-            <a
-              href={returnMapsHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex min-h-12 items-center justify-center rounded-full bg-white px-4 py-3.5 text-base font-semibold text-espresso ring-1 ring-linen"
-            >
-              Maps home
-            </a>
-          ) : null}
+        <button
+          type="button"
+          onClick={() => void estimateReturn()}
+          disabled={busy !== null || !homeConfigured || !dest}
+          className="mt-3 min-h-12 w-full rounded-full bg-crust-dark px-4 py-3.5 text-base font-semibold text-white disabled:opacity-50"
+        >
+          {busy === "return-estimate" ? "Estimating…" : "Return to bakery"}
+        </button>
+        <div className="mt-2">
+          <NavApps mapsHref={returnMapsHref} wazeHref={returnWazeHref} />
         </div>
         <label className="mt-3 block text-sm">
           <span className="font-medium text-brown">Return miles</span>
