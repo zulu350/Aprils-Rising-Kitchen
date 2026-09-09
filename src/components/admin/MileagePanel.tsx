@@ -37,12 +37,14 @@ type Props = {
   deliveryAddress: string | null;
   deliveryMiles: number | null;
   milesFrom: string | null;
+  returnMiles: number | null;
   homeConfigured: boolean;
   homeAddress: string | null;
   lastStop: MileageLastStop | null;
   onSaved: (next: {
-    deliveryMiles: number | null;
-    milesFrom: string | null;
+    deliveryMiles?: number | null;
+    milesFrom?: string | null;
+    returnMiles?: number | null;
   }) => void;
   onError: (message: string) => void;
   onInfo: (message: string) => void;
@@ -54,6 +56,7 @@ export function MileagePanel({
   deliveryAddress,
   deliveryMiles,
   milesFrom,
+  returnMiles,
   homeConfigured,
   homeAddress,
   lastStop,
@@ -67,7 +70,12 @@ export function MileagePanel({
   const [miles, setMiles] = useState(
     deliveryMiles == null ? "" : String(deliveryMiles),
   );
-  const [busy, setBusy] = useState<"estimate" | "save" | null>(null);
+  const [backMiles, setBackMiles] = useState(
+    returnMiles == null ? "" : String(returnMiles),
+  );
+  const [busy, setBusy] = useState<
+    "estimate" | "save" | "return-estimate" | "return-save" | null
+  >(null);
 
   const dest = destinationLine(deliveryAddress, deliveryCity);
   const origin =
@@ -80,6 +88,8 @@ export function MileagePanel({
       : dest
         ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest)}`
         : null;
+  const returnMapsHref =
+    dest && homeAddress ? mapsDir(dest, homeAddress) : null;
 
   async function estimate() {
     setBusy("estimate");
@@ -141,6 +151,64 @@ export function MileagePanel({
       onInfo("Miles saved.");
     } catch {
       onError("Network error saving miles.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function estimateReturn() {
+    setBusy("return-estimate");
+    onError("");
+    onInfo("");
+    try {
+      const res = await fetch(
+        `/api/admin/orders/${orderId}/mileage-estimate?from=return`,
+      );
+      const data = (await res.json()) as {
+        miles?: number;
+        error?: string;
+      };
+      if (!res.ok) {
+        onError(data.error || "Could not estimate return miles.");
+        return;
+      }
+      if (typeof data.miles === "number") {
+        setBackMiles(String(data.miles));
+        onInfo(
+          `Estimated ${data.miles} miles back to the bakery. Overwrite if you did not go straight home.`,
+        );
+      }
+    } catch {
+      onError("Network error estimating return miles.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function saveReturn() {
+    setBusy("return-save");
+    onError("");
+    onInfo("");
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          returnMiles: backMiles.trim() === "" ? null : backMiles,
+        }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        order?: { returnMiles: number | null };
+      };
+      if (!res.ok) {
+        onError(data.error || "Could not save return miles.");
+        return;
+      }
+      onSaved({ returnMiles: data.order?.returnMiles ?? null });
+      onInfo("Return miles saved.");
+    } catch {
+      onError("Network error saving return miles.");
     } finally {
       setBusy(null);
     }
@@ -227,6 +295,56 @@ export function MileagePanel({
       >
         {busy === "save" ? "Saving…" : "Save miles"}
       </button>
+
+      <div className="mt-6 border-t border-linen pt-4">
+        <p className="text-xs font-semibold tracking-wide text-muted uppercase">
+          Last drop of the day
+        </p>
+        <p className="mt-1 text-sm text-muted">
+          Only on the final delivery. Estimates this address back to the
+          bakery.
+        </p>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => void estimateReturn()}
+            disabled={busy !== null || !homeConfigured || !dest}
+            className="min-h-12 rounded-full bg-crust-dark px-4 py-3.5 text-base font-semibold text-white disabled:opacity-50"
+          >
+            {busy === "return-estimate"
+              ? "Estimating…"
+              : "Return to bakery"}
+          </button>
+          {returnMapsHref ? (
+            <a
+              href={returnMapsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-h-12 items-center justify-center rounded-full bg-white px-4 py-3.5 text-base font-semibold text-espresso ring-1 ring-linen"
+            >
+              Maps home
+            </a>
+          ) : null}
+        </div>
+        <label className="mt-3 block text-sm">
+          <span className="font-medium text-brown">Return miles</span>
+          <input
+            inputMode="decimal"
+            value={backMiles}
+            onChange={(e) => setBackMiles(e.target.value)}
+            placeholder="e.g. 4.8"
+            className="mt-1 w-full rounded-xl border border-linen bg-white px-3 py-3.5 text-lg tabular-nums"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={() => void saveReturn()}
+          disabled={busy !== null}
+          className="mt-3 min-h-12 w-full rounded-full bg-espresso px-4 py-3.5 text-base font-semibold text-white disabled:opacity-50"
+        >
+          {busy === "return-save" ? "Saving…" : "Save return"}
+        </button>
+      </div>
     </section>
   );
 }

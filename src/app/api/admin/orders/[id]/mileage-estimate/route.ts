@@ -19,9 +19,9 @@ export async function GET(request: Request, { params }: Params) {
 
   const { id } = await params;
   const from = new URL(request.url).searchParams.get("from") ?? "home";
-  if (from !== "home" && from !== "last") {
+  if (from !== "home" && from !== "last" && from !== "return") {
     return NextResponse.json(
-      { error: "from must be home or last." },
+      { error: "from must be home, last, or return." },
       { status: 400 },
     );
   }
@@ -30,6 +30,7 @@ export async function GET(request: Request, { params }: Params) {
     where: { id },
     select: {
       id: true,
+      orderNumber: true,
       fulfillment: true,
       preferredDate: true,
       deliveryCity: true,
@@ -46,8 +47,8 @@ export async function GET(request: Request, { params }: Params) {
     );
   }
 
-  const dest = formatDestination(order.deliveryAddress, order.deliveryCity);
-  if (!dest) {
+  const stop = formatDestination(order.deliveryAddress, order.deliveryCity);
+  if (!stop) {
     return NextResponse.json(
       { error: "This order needs a delivery address first." },
       { status: 400 },
@@ -55,9 +56,24 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   let origin: string | null = null;
+  let dest = stop;
   let fromLabel = "Home";
 
-  if (from === "home") {
+  if (from === "return") {
+    const bakery = homeAddress();
+    origin = stop;
+    fromLabel = order.orderNumber;
+    if (!bakery) {
+      return NextResponse.json(
+        {
+          error:
+            "Set MILEAGE_HOME (or PICKUP_ADDRESS) in Netlify to estimate the drive home.",
+        },
+        { status: 400 },
+      );
+    }
+    dest = bakery;
+  } else if (from === "home") {
     origin = homeAddress();
     fromLabel = "Home";
     if (!origin) {
@@ -99,6 +115,13 @@ export async function GET(request: Request, { params }: Params) {
         { status: 400 },
       );
     }
+  }
+
+  if (!origin) {
+    return NextResponse.json(
+      { error: "Could not determine a starting address." },
+      { status: 400 },
+    );
   }
 
   try {

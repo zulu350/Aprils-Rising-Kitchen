@@ -57,6 +57,7 @@ type OrderDetailData = {
   pickupAddress: string | null;
   deliveryMiles?: number | null;
   milesFrom?: string | null;
+  returnMiles?: number | null;
   items: Array<{
     menuItemId?: string;
     name: string;
@@ -367,6 +368,7 @@ export function OrderDetail({ id }: { id: string }) {
           deliveryAddress={order.deliveryAddress}
           deliveryMiles={order.deliveryMiles ?? null}
           milesFrom={order.milesFrom ?? null}
+          returnMiles={order.returnMiles ?? null}
           homeConfigured={homeConfigured}
           homeAddress={homeAddress}
           lastStop={lastStop}
@@ -375,8 +377,7 @@ export function OrderDetail({ id }: { id: string }) {
               current
                 ? {
                     ...current,
-                    deliveryMiles: next.deliveryMiles,
-                    milesFrom: next.milesFrom,
+                    ...next,
                   }
                 : current,
             );

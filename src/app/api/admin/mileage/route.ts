@@ -17,9 +17,9 @@ export async function GET(request: Request) {
   const rows = await prisma.order.findMany({
     where: {
       fulfillment: "delivery",
-      deliveryMiles: { not: null },
       preferredDate: { gte: from, lte: to },
       status: { not: "cancelled" },
+      OR: [{ deliveryMiles: { not: null } }, { returnMiles: { not: null } }],
     },
     orderBy: [{ preferredDate: "asc" }, { updatedAt: "asc" }],
   });
@@ -36,16 +36,30 @@ export async function GET(request: Request) {
   for (const row of rows) {
     const dest =
       formatDestination(row.deliveryAddress, row.deliveryCity) ?? "";
-    lines.push(
-      [
-        csvEscape(row.preferredDate),
-        csvEscape(row.milesFrom || "Home"),
-        csvEscape(dest),
-        csvEscape(`Bakery delivery ${row.orderNumber}`),
-        row.deliveryMiles == null ? "" : String(row.deliveryMiles),
-        csvEscape(row.orderNumber),
-      ].join(","),
-    );
+    if (row.deliveryMiles != null) {
+      lines.push(
+        [
+          csvEscape(row.preferredDate),
+          csvEscape(row.milesFrom || "Home"),
+          csvEscape(dest),
+          csvEscape(`Bakery delivery ${row.orderNumber}`),
+          String(row.deliveryMiles),
+          csvEscape(row.orderNumber),
+        ].join(","),
+      );
+    }
+    if (row.returnMiles != null) {
+      lines.push(
+        [
+          csvEscape(row.preferredDate),
+          csvEscape(row.orderNumber),
+          csvEscape("Home"),
+          csvEscape(`Return to bakery ${row.orderNumber}`),
+          String(row.returnMiles),
+          csvEscape(row.orderNumber),
+        ].join(","),
+      );
+    }
   }
 
   const csv = `${lines.join("\n")}\n`;

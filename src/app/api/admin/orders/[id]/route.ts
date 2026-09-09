@@ -48,6 +48,7 @@ type PatchBody = {
   notifyCustomer?: boolean;
   deliveryMiles?: number | string | null;
   milesFrom?: string | null;
+  returnMiles?: number | string | null;
 };
 
 function normalizeItems(items: EditItemInput[]) {
@@ -201,10 +202,15 @@ export async function PATCH(request: Request, { params }: Params) {
     if (fulfillment.value.fulfillment === "pickup") {
       data.deliveryMiles = null;
       data.milesFrom = null;
+      data.returnMiles = null;
     }
   }
 
-  if (body.deliveryMiles !== undefined || body.milesFrom !== undefined) {
+  if (
+    body.deliveryMiles !== undefined ||
+    body.milesFrom !== undefined ||
+    body.returnMiles !== undefined
+  ) {
     const nextType =
       (data.fulfillment as string | undefined) ?? existing.fulfillment;
     if (nextType !== "delivery") {
@@ -224,6 +230,13 @@ export async function PATCH(request: Request, { params }: Params) {
       const label =
         typeof body.milesFrom === "string" ? body.milesFrom.trim() : "";
       data.milesFrom = label || null;
+    }
+    if (body.returnMiles !== undefined) {
+      const parsed = parseMiles(body.returnMiles);
+      if (!parsed.ok) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
+      }
+      data.returnMiles = parsed.value;
     }
   }
 
