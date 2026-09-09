@@ -73,6 +73,7 @@ export function MileagePanel({
     "estimate" | "save" | "return-estimate" | "return-save" | null
   >(null);
   const [open, setOpen] = useState(false);
+  const [returnOpen, setReturnOpen] = useState(false);
   const [panelError, setPanelError] = useState("");
   const [panelInfo, setPanelInfo] = useState("");
 
@@ -159,6 +160,7 @@ export function MileagePanel({
   async function estimateReturn() {
     setBusy("return-estimate");
     setOpen(true);
+    setReturnOpen(true);
     setPanelError("");
     setPanelInfo("");
     try {
@@ -323,11 +325,18 @@ export function MileagePanel({
         {busy === "save" ? "Saving…" : "Save miles"}
       </button>
 
-      <div className="mt-6 border-t border-linen pt-4">
-        <p className="text-xs font-semibold tracking-wide text-muted uppercase">
-          Last drop of the day
-        </p>
-        <p className="mt-1 text-sm text-muted">
+      <details
+        className="mt-6 border-t border-linen pt-4"
+        open={returnOpen}
+        onToggle={(event) => setReturnOpen(event.currentTarget.open)}
+      >
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-espresso [&::-webkit-details-marker]:hidden">
+          <span>Last drop of the day</span>
+          <span className="font-medium text-muted">
+            {returnMiles != null ? `${returnMiles} mi back` : "Tap if this is the last stop"}
+          </span>
+        </summary>
+        <p className="mt-2 text-sm text-muted">
           Only on the final delivery. Estimates this address back to the
           bakery.
         </p>
@@ -371,7 +380,7 @@ export function MileagePanel({
         >
           {busy === "return-save" ? "Saving…" : "Save return"}
         </button>
-      </div>
+      </details>
     </details>
   );
 }
