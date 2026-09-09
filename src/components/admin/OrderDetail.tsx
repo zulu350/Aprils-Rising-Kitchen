@@ -15,6 +15,10 @@ import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
 import { deliveryFeeCents } from "@/lib/delivery";
 import { PAYMENT_METHOD_LABELS, squareMethodLabel } from "@/lib/payment";
+import {
+  MileagePanel,
+  type MileageLastStop,
+} from "@/components/admin/MileagePanel";
 
 type LineDraft = {
   key: string;
@@ -51,6 +55,8 @@ type OrderDetailData = {
   totalCents: number;
   createdAt: string;
   pickupAddress: string | null;
+  deliveryMiles?: number | null;
+  milesFrom?: string | null;
   items: Array<{
     menuItemId?: string;
     name: string;
@@ -99,6 +105,9 @@ export function OrderDetail({ id }: { id: string }) {
   const [adjustmentDollars, setAdjustmentDollars] = useState("0.00");
   const [adjustmentLabel, setAdjustmentLabel] = useState("");
   const [notifyCustomer, setNotifyCustomer] = useState(false);
+  const [lastStop, setLastStop] = useState<MileageLastStop | null>(null);
+  const [homeConfigured, setHomeConfigured] = useState(false);
+  const [homeAddress, setHomeAddress] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError("");
@@ -114,7 +123,17 @@ export function OrderDetail({ id }: { id: string }) {
         setOrder(null);
       } else {
         const o = data.order as OrderDetailData;
+        const mileage = data.mileage as
+          | {
+              homeConfigured?: boolean;
+              homeAddress?: string | null;
+              lastStop?: MileageLastStop | null;
+            }
+          | undefined;
         setOrder(o);
+        setHomeConfigured(Boolean(mileage?.homeConfigured));
+        setHomeAddress(mileage?.homeAddress ?? null);
+        setLastStop(mileage?.lastStop ?? null);
         setLines(
           o.items.map((item) => ({
             key: newKey(),
@@ -340,6 +359,32 @@ export function OrderDetail({ id }: { id: string }) {
           {formatMoney(editing ? previewTotal : order.totalCents)}
         </p>
       </div>
+
+      {order.fulfillment === "delivery" ? (
+        <MileagePanel
+          orderId={order.id}
+          deliveryCity={order.deliveryCity}
+          deliveryAddress={order.deliveryAddress}
+          deliveryMiles={order.deliveryMiles ?? null}
+          milesFrom={order.milesFrom ?? null}
+          homeConfigured={homeConfigured}
+          homeAddress={homeAddress}
+          lastStop={lastStop}
+          onSaved={(next) => {
+            setOrder((current) =>
+              current
+                ? {
+                    ...current,
+                    deliveryMiles: next.deliveryMiles,
+                    milesFrom: next.milesFrom,
+                  }
+                : current,
+            );
+          }}
+          onError={setError}
+          onInfo={setInfo}
+        />
+      ) : null}
 
       {error ? (
         <p className="text-sm text-red-700" role="alert">

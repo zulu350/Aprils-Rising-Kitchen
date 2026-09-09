@@ -49,6 +49,12 @@ export function AdminShell({
               Blocked days
             </Link>
             <Link
+              href="/admin/mileage"
+              className="rounded-full px-3 py-2 text-sm text-muted hover:bg-wheat hover:text-espresso"
+            >
+              Mileage
+            </Link>
+            <Link
               href="/"
               className="rounded-full px-3 py-2 text-sm text-muted hover:bg-wheat hover:text-espresso"
             >

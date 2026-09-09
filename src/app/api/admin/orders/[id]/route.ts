@@ -8,6 +8,11 @@ import { prisma } from "@/lib/db";
 import { quoteOrderTotals } from "@/lib/delivery";
 import { sendOrderUpdatedEmail } from "@/lib/email";
 import { resolveFulfillmentPatch } from "@/lib/fulfillment-update";
+import {
+  homeAddress,
+  parseMiles,
+  pickLastStop,
+} from "@/lib/mileage";
 import { parseStaffPaymentMethodStored } from "@/lib/staff-payment-method";
 
 export const runtime = "nodejs";
@@ -41,6 +46,8 @@ type PatchBody = {
   adjustmentLabel?: string | null;
   /** If true and customer has email, send update email after save */
   notifyCustomer?: boolean;
+  deliveryMiles?: number | string | null;
+  milesFrom?: string | null;
 };
 
 function normalizeItems(items: EditItemInput[]) {
@@ -90,6 +97,28 @@ export async function GET(_request: Request, { params }: Params) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
+  const peers =
+    order.fulfillment === "delivery"
+      ? await prisma.order.findMany({
+          where: {
+            id: { not: order.id },
+            fulfillment: "delivery",
+            preferredDate: order.preferredDate,
+            status: { not: "cancelled" },
+          },
+          select: {
+            id: true,
+            orderNumber: true,
+            customerName: true,
+            deliveryCity: true,
+            deliveryAddress: true,
+            deliveryMiles: true,
+            updatedAt: true,
+          },
+          orderBy: { updatedAt: "desc" },
+        })
+      : [];
+
   return NextResponse.json({
     order: {
       ...order,
@@ -97,6 +126,11 @@ export async function GET(_request: Request, { params }: Params) {
         order.fulfillment === "pickup"
           ? process.env.PICKUP_ADDRESS?.trim() || null
           : null,
+    },
+    mileage: {
+      homeConfigured: Boolean(homeAddress()),
+      homeAddress: homeAddress(),
+      lastStop: pickLastStop(peers),
     },
   });
 }
@@ -164,6 +198,33 @@ export async function PATCH(request: Request, { params }: Params) {
     data.deliveryCity = fulfillment.value.deliveryCity;
     data.deliveryAddress = fulfillment.value.deliveryAddress;
     contentEdit = true;
+    if (fulfillment.value.fulfillment === "pickup") {
+      data.deliveryMiles = null;
+      data.milesFrom = null;
+    }
+  }
+
+  if (body.deliveryMiles !== undefined || body.milesFrom !== undefined) {
+    const nextType =
+      (data.fulfillment as string | undefined) ?? existing.fulfillment;
+    if (nextType !== "delivery") {
+      return NextResponse.json(
+        { error: "Miles are only logged on delivery orders." },
+        { status: 400 },
+      );
+    }
+    if (body.deliveryMiles !== undefined) {
+      const parsed = parseMiles(body.deliveryMiles);
+      if (!parsed.ok) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
+      }
+      data.deliveryMiles = parsed.value;
+    }
+    if (body.milesFrom !== undefined) {
+      const label =
+        typeof body.milesFrom === "string" ? body.milesFrom.trim() : "";
+      data.milesFrom = label || null;
+    }
   }
 
   if (body.notes !== undefined) {

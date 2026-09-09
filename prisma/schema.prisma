@@ -38,6 +38,10 @@ model Order {
   adminNote           String?
   adminEditedAt       DateTime?
   totalCents          Int
+  /** Kitchen mileage log (delivery only). Tenths of a mile. */
+  deliveryMiles       Float?
+  /** Home, ARK-####, or a short label for the start of this leg */
+  milesFrom           String?
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
   items               OrderItem[]

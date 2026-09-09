@@ -8,7 +8,9 @@
 
 # Set these in Netlify UI → Site settings → Environment variables:
 # DATABASE_URL, ADMIN_PASSWORD, SESSION_SECRET, PICKUP_ADDRESS,
-# NEXT_PUBLIC_SITE_URL, and optional SMTP_* / ORDER_NOTIFY_EMAIL
+# NEXT_PUBLIC_SITE_URL, optional MILEAGE_HOME (from-address for delivery miles;
+# falls back to PICKUP_ADDRESS), optional MAPBOX_ACCESS_TOKEN, and SMTP_* /
+# ORDER_NOTIFY_EMAIL
 
 # Canonical host is www. Send the Netlify subdomain there.
 [[redirects]]
