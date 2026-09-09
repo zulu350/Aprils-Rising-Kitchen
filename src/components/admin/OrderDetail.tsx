@@ -460,8 +460,6 @@ export function OrderDetail({ id }: { id: string }) {
                 : current,
             );
           }}
-          onError={setError}
-          onInfo={setInfo}
         />
       ) : null}
 

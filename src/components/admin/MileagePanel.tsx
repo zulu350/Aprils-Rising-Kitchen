@@ -46,8 +46,6 @@ type Props = {
     milesFrom?: string | null;
     returnMiles?: number | null;
   }) => void;
-  onError: (message: string) => void;
-  onInfo: (message: string) => void;
 };
 
 export function MileagePanel({
@@ -61,8 +59,6 @@ export function MileagePanel({
   homeAddress,
   lastStop,
   onSaved,
-  onError,
-  onInfo,
 }: Props) {
   const [from, setFrom] = useState<"home" | "last">(
     milesFrom && milesFrom !== "Home" && lastStop ? "last" : "home",
@@ -76,6 +72,9 @@ export function MileagePanel({
   const [busy, setBusy] = useState<
     "estimate" | "save" | "return-estimate" | "return-save" | null
   >(null);
+  const [open, setOpen] = useState(false);
+  const [panelError, setPanelError] = useState("");
+  const [panelInfo, setPanelInfo] = useState("");
 
   const dest = destinationLine(deliveryAddress, deliveryCity);
   const origin =
@@ -93,8 +92,9 @@ export function MileagePanel({
 
   async function estimate() {
     setBusy("estimate");
-    onError("");
-    onInfo("");
+    setOpen(true);
+    setPanelError("");
+    setPanelInfo("");
     try {
       const res = await fetch(
         `/api/admin/orders/${orderId}/mileage-estimate?from=${from}`,
@@ -105,17 +105,17 @@ export function MileagePanel({
         error?: string;
       };
       if (!res.ok) {
-        onError(data.error || "Could not estimate miles.");
+        setPanelError(data.error || "Could not estimate miles.");
         return;
       }
       if (typeof data.miles === "number") {
         setMiles(String(data.miles));
-        onInfo(
+        setPanelInfo(
           `Estimated ${data.miles} miles from ${data.milesFrom ?? from}. Overwrite if you stopped anywhere else.`,
         );
       }
     } catch {
-      onError("Network error estimating miles.");
+      setPanelError("Network error estimating miles.");
     } finally {
       setBusy(null);
     }
@@ -123,8 +123,8 @@ export function MileagePanel({
 
   async function save() {
     setBusy("save");
-    onError("");
-    onInfo("");
+    setPanelError("");
+    setPanelInfo("");
     try {
       const fromLabel =
         from === "last" && lastStop ? lastStop.orderNumber : "Home";
@@ -141,16 +141,16 @@ export function MileagePanel({
         order?: { deliveryMiles: number | null; milesFrom: string | null };
       };
       if (!res.ok) {
-        onError(data.error || "Could not save miles.");
+        setPanelError(data.error || "Could not save miles.");
         return;
       }
       onSaved({
         deliveryMiles: data.order?.deliveryMiles ?? null,
         milesFrom: data.order?.milesFrom ?? fromLabel,
       });
-      onInfo("Miles saved.");
+      setPanelInfo("Miles saved.");
     } catch {
-      onError("Network error saving miles.");
+      setPanelError("Network error saving miles.");
     } finally {
       setBusy(null);
     }
@@ -158,8 +158,9 @@ export function MileagePanel({
 
   async function estimateReturn() {
     setBusy("return-estimate");
-    onError("");
-    onInfo("");
+    setOpen(true);
+    setPanelError("");
+    setPanelInfo("");
     try {
       const res = await fetch(
         `/api/admin/orders/${orderId}/mileage-estimate?from=return`,
@@ -169,17 +170,17 @@ export function MileagePanel({
         error?: string;
       };
       if (!res.ok) {
-        onError(data.error || "Could not estimate return miles.");
+        setPanelError(data.error || "Could not estimate return miles.");
         return;
       }
       if (typeof data.miles === "number") {
         setBackMiles(String(data.miles));
-        onInfo(
+        setPanelInfo(
           `Estimated ${data.miles} miles back to the bakery. Overwrite if you did not go straight home.`,
         );
       }
     } catch {
-      onError("Network error estimating return miles.");
+      setPanelError("Network error estimating return miles.");
     } finally {
       setBusy(null);
     }
@@ -187,8 +188,8 @@ export function MileagePanel({
 
   async function saveReturn() {
     setBusy("return-save");
-    onError("");
-    onInfo("");
+    setPanelError("");
+    setPanelInfo("");
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
@@ -202,13 +203,13 @@ export function MileagePanel({
         order?: { returnMiles: number | null };
       };
       if (!res.ok) {
-        onError(data.error || "Could not save return miles.");
+        setPanelError(data.error || "Could not save return miles.");
         return;
       }
       onSaved({ returnMiles: data.order?.returnMiles ?? null });
-      onInfo("Return miles saved.");
+      setPanelInfo("Return miles saved.");
     } catch {
-      onError("Network error saving return miles.");
+      setPanelError("Network error saving return miles.");
     } finally {
       setBusy(null);
     }
@@ -222,13 +223,27 @@ export function MileagePanel({
     .join(" · ");
 
   return (
-    <details className="rounded-2xl bg-wheat p-4 ring-1 ring-linen sm:p-5">
+    <details
+      className="rounded-2xl bg-wheat p-4 ring-1 ring-linen sm:p-5"
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 font-display text-xl text-espresso [&::-webkit-details-marker]:hidden">
         <span>Delivery miles</span>
         <span className="text-sm font-sans font-medium text-muted">
           {milesSummary || "Tap to log"}
         </span>
       </summary>
+      {panelError ? (
+        <p className="mt-3 text-sm text-red-700" role="alert">
+          {panelError}
+        </p>
+      ) : null}
+      {panelInfo ? (
+        <p className="mt-3 text-sm text-sage-dark" role="status">
+          {panelInfo}
+        </p>
+      ) : null}
       <p className="mt-3 text-sm text-muted">
         Tap From, then Estimate. Change the number if this run was not a
         straight bakery trip.

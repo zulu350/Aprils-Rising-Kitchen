@@ -28,6 +28,21 @@ export function formatDestination(
   return place ? `${street}, ${place}, ID` : `${street}, ID`;
 }
 
+function idahoExpand(query: string): string {
+  let q = query.trim();
+  q = q.replace(/,\s*ID\b/gi, ", Idaho");
+  if (!/idaho/i.test(q)) q = `${q}, Idaho`;
+  if (!/USA|United States/i.test(q)) q = `${q}, USA`;
+  return q.replace(/,\s*,/g, ",").replace(/\s+/g, " ").trim();
+}
+
+function simplifyAddress(query: string): string {
+  return query
+    .replace(/\b(apt|apartment|unit|ste|suite|#)\s*\S+/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function parseMiles(
   raw: unknown,
 ): { ok: true; value: number | null } | { ok: false; error: string } {
@@ -89,9 +104,28 @@ async function geocodeNominatim(query: string): Promise<LatLng> {
   const lat = Number(hit?.lat);
   const lng = Number(hit?.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    throw new Error(`Could not find “${query}” on the map.`);
+    throw new Error("not found");
   }
   return { lat, lng };
+}
+
+async function geocodePhoton(query: string): Promise<LatLng> {
+  const url =
+    "https://photon.komoot.io/api/?" +
+    new URLSearchParams({
+      q: query,
+      limit: "1",
+      lat: "43.615",
+      lon: "-116.202",
+    }).toString();
+  const json = (await fetchJson(url)) as {
+    features?: Array<{ geometry?: { coordinates?: [number, number] } }>;
+  };
+  const coords = json.features?.[0]?.geometry?.coordinates;
+  if (!coords || coords.length < 2) {
+    throw new Error("not found");
+  }
+  return { lng: coords[0], lat: coords[1] };
 }
 
 async function geocodeMapbox(query: string, token: string): Promise<LatLng> {
@@ -107,7 +141,7 @@ async function geocodeMapbox(query: string, token: string): Promise<LatLng> {
   };
   const center = json.features?.[0]?.center;
   if (!center || center.length < 2) {
-    throw new Error(`Could not find “${query}” on the map.`);
+    throw new Error("not found");
   }
   return { lng: center[0], lat: center[1] };
 }
@@ -116,12 +150,45 @@ async function geocode(query: string): Promise<LatLng> {
   const key = query.toLowerCase();
   const cached = geocodeCache.get(key);
   if (cached) return cached;
+
+  const variants = [
+    idahoExpand(query),
+    simplifyAddress(idahoExpand(query)),
+    query.trim(),
+  ].filter((value, index, all) => value && all.indexOf(value) === index);
+
   const token = (process.env.MAPBOX_ACCESS_TOKEN ?? "").trim();
-  const point = token
-    ? await geocodeMapbox(query, token)
-    : await geocodeNominatim(query);
-  geocodeCache.set(key, point);
-  return point;
+  let lastError: unknown;
+  for (const variant of variants) {
+    if (token) {
+      try {
+        const point = await geocodeMapbox(variant, token);
+        geocodeCache.set(key, point);
+        return point;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+    try {
+      const point = await geocodePhoton(variant);
+      geocodeCache.set(key, point);
+      return point;
+    } catch (err) {
+      lastError = err;
+    }
+    try {
+      const point = await geocodeNominatim(variant);
+      geocodeCache.set(key, point);
+      return point;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  console.error("Geocode failed:", query, lastError);
+  throw new Error(
+    "Could not find that address on the map. Type the miles, or use Open Maps.",
+  );
 }
 
 async function routeMiles(origin: LatLng, dest: LatLng): Promise<number> {
