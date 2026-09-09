@@ -32,7 +32,7 @@ export default function HomePage() {
               treats — handcrafted in small batches and made fresh to order for
               your table.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href="/menu"
                 className="rounded-full bg-crust px-6 py-3 text-sm font-semibold text-espresso shadow-md transition hover:bg-wheat"
@@ -41,7 +41,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/contact"
-                className="text-sm font-medium text-white/90 underline decoration-crust underline-offset-4 hover:text-white"
+                className="rounded-full px-6 py-3 text-sm font-semibold text-white ring-1 ring-white/80 transition hover:bg-white/15"
               >
                 Contact us
               </Link>

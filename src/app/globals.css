@@ -58,7 +58,8 @@ a {
 /* Link-styled solid buttons: inherit would keep brown text on dark fills */
 a.bg-espresso,
 a.bg-crust-dark,
-a.bg-sage-dark {
+a.bg-sage-dark,
+a.text-white {
   color: #fff;
 }
 
