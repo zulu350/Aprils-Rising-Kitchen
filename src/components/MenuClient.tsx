@@ -164,7 +164,7 @@ export function MenuClient() {
                 {itemCount} item{itemCount === 1 ? "" : "s"} ·{" "}
                 {formatPrice(subtotalCents)}
               </p>
-              <p className="text-xs text-muted">No tax · pickup or delivery</p>
+              <p className="text-xs text-muted">Pickup or delivery</p>
             </div>
             <Link
               href="/cart"

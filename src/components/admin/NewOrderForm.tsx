@@ -444,7 +444,6 @@ export function NewOrderForm() {
           ) : null}
           <p className="text-lg font-semibold tabular-nums text-espresso">
             Total {formatMoney(totalCents)}
-            <span className="ml-2 text-sm font-normal text-muted">No tax</span>
           </p>
         </div>
       </section>

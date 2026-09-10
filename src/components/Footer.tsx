@@ -91,7 +91,6 @@ export function Footer() {
               Pickup &amp; delivery 1:00–5:00 PM that day ·{" "}
               {BUSINESS.serviceArea}
             </li>
-            <li className="text-muted">Questions: Monday–Friday</li>
             <li className="text-muted">{PAYMENTS_LINE}</li>
             <li className="pt-2 text-muted">{COTTAGE_LINE}</li>
             <li>

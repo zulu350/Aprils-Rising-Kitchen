@@ -15,16 +15,16 @@ export const CUTOFF_HOUR = 17; // 5:00 PM
 
 export const MESSAGING = {
   hours:
-    "Questions Monday–Friday. Pickup and delivery 1:00–5:00 PM on your chosen day.",
+    "Pickup and delivery 1:00–5:00 PM on your chosen day.",
   fulfillmentWindow:
-    "Pickup and delivery are scheduled between 1:00 PM and 5:00 PM on your chosen day.",
+    "Pickup and delivery: 1:00–5:00 PM on the day you choose.",
   sourdoughTitle: "Sourdough bake days",
   sourdough:
-    "Our sourdough loaves are baked fresh for Wednesday and Friday only. Please order by Monday 5:00 PM for Wednesday, or by Wednesday 5:00 PM for Friday. Rolls and treats are more flexible when ordered on their own.",
+    "Order by Monday 5:00 PM for Wednesday, or Wednesday 5:00 PM for Friday.",
   sourdoughSpecial:
-    "Need something outside these days? Leave a note at checkout — we'll do our best to accommodate special requests.",
+    "Need a different day? Leave a note at checkout and we'll try to make it work.",
   mixedCart:
-    "Your cart includes sourdough, so this order is available for Wednesday or Friday only (with the same order cutoffs).",
+    "Your cart has sourdough, so this order is Wednesday or Friday only.",
   dayFull:
     "This day is full (our 4-order daily limit). Please choose another available day, or contact us for special requests.",
   dayBlocked:
@@ -35,7 +35,7 @@ export const MESSAGING = {
   noDates:
     "No open dates match your cart right now. Try removing a loaf, choosing another week, or call/text us — we're happy to help.",
   rollsOnly:
-    "Rolls and treats: please allow at least 24 hours' notice. Available Monday–Friday.",
+    "Rolls and treats ordered by themselves can usually be ready with about a day's notice.",
 } as const;
 
 export type DateSlot = {

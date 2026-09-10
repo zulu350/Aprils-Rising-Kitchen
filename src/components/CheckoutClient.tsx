@@ -164,19 +164,18 @@ export function CheckoutClient() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="font-display text-4xl text-espresso">Checkout</h1>
       <p className="mt-2 text-sm text-muted">
-        No tax. Cash, Venmo, Zelle, or card / Apple Pay / Google Pay.
-        {availMsg?.hours ? (
-          <>
-            <br />
-            {availMsg.hours}
-          </>
-        ) : null}
+        Cash, Venmo, Zelle, or card / Apple Pay / Google Pay. Pickup and
+        delivery 1:00–5:00 PM on your chosen day.
       </p>
       {availMsg ? (
         <div className="mt-4 rounded-2xl bg-wheat px-4 py-3 text-sm leading-relaxed text-brown ring-1 ring-linen">
-          <p>{availMsg.schedule}</p>
           {availMsg.mixed ? (
-            <p className="mt-2 font-medium text-espresso">{availMsg.mixed}</p>
+            <p className="font-medium text-espresso">{availMsg.mixed}</p>
+          ) : (
+            <p>{availMsg.schedule}</p>
+          )}
+          {availMsg.mixed ? (
+            <p className="mt-2">{availMsg.schedule}</p>
           ) : null}
           <p className="mt-2 text-muted">{availMsg.fulfillmentWindow}</p>
           <p className="mt-2 text-muted">{availMsg.special}</p>

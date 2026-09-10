@@ -193,7 +193,7 @@ function buildKitchenText(order: OrderEmailPayload): string {
     "Items:",
     itemsListText(order),
     "",
-    `Total: ${formatPrice(order.totalCents)} (no tax)`,
+    `Total: ${formatPrice(order.totalCents)}`,
     order.notes ? `\nNotes: ${order.notes}` : null,
     "",
     `Open in kitchen: ${adminUrl}`,

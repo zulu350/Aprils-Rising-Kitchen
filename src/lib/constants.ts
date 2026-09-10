@@ -24,7 +24,7 @@ export const HOURS = {
   rolls:
     "Rolls and treats only: Monday–Friday, about 24 hours' notice.",
   pickupDelivery: `Pickup and delivery: 1:00–5:00 PM that day, ${BUSINESS.serviceArea}.`,
-  questions: "Questions: Monday–Friday.",
+  questions: `Questions? Call or text ${BUSINESS.phone} or email ${BUSINESS.email}.`,
 } as const;
 
 export const PAYMENTS_LINE =
