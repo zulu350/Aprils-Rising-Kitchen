@@ -9,6 +9,9 @@ const ALLOWED: Array<{ method: string; pattern: RegExp }> = [
   { method: "POST", pattern: /^\/api\/staff\/orders\/preview$/ },
   { method: "GET", pattern: /^\/api\/staff\/orders$/ },
   { method: "POST", pattern: /^\/api\/staff\/orders$/ },
+  { method: "GET", pattern: /^\/api\/staff\/blocked-days$/ },
+  { method: "POST", pattern: /^\/api\/staff\/blocked-days$/ },
+  { method: "DELETE", pattern: /^\/api\/staff\/blocked-days$/ },
 ];
 
 function json(error: string, status: number): Response {
