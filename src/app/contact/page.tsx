@@ -62,7 +62,7 @@ export default function ContactPage() {
           </a>
         </li>
         <li className="pt-2 text-sm leading-relaxed text-muted">
-          <HoursCopy />
+          <HoursCopy compactQuestions />
           <p className="mt-2">{PAYMENTS_LINE}</p>
           <p className="mt-2">{COTTAGE_LINE}</p>
         </li>
