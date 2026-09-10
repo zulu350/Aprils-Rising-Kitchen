@@ -13,11 +13,16 @@ import { formatMoney } from "@/lib/admin-orders";
 import { nowInBoise, toISODate } from "@/lib/availability";
 import { deliveryFeeCents } from "@/lib/delivery";
 
-type Line = {
-  key: string;
-  item: MenuItem;
-  quantity: number;
-};
+type Line =
+  | { key: string; kind: "menu"; item: MenuItem; quantity: number }
+  | {
+      key: string;
+      kind: "custom";
+      name: string;
+      quantity: number;
+      unitPriceCents: number;
+      unitLabel: string;
+    };
 
 function newKey() {
   return `line-${Math.random().toString(36).slice(2, 10)}`;
@@ -46,11 +51,19 @@ export function NewOrderForm() {
   const [paid, setPaid] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [addItemId, setAddItemId] = useState(availableItems[0]?.id ?? "");
+  const [customName, setCustomName] = useState("");
+  const [customQty, setCustomQty] = useState("1");
+  const [customPrice, setCustomPrice] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const subtotalCents = useMemo(
-    () => lines.reduce((sum, line) => sum + line.item.priceCents * line.quantity, 0),
+    () =>
+      lines.reduce((sum, line) => {
+        const unit =
+          line.kind === "menu" ? line.item.priceCents : line.unitPriceCents;
+        return sum + unit * line.quantity;
+      }, 0),
     [lines],
   );
   const feeCents = deliveryFeeCents(fulfillment, subtotalCents);
@@ -60,22 +73,53 @@ export function NewOrderForm() {
     const item = availableItems.find((i) => i.id === addItemId);
     if (!item) return;
     setLines((prev) => {
-      const existing = prev.find((l) => l.item.id === item.id);
+      const existing = prev.find(
+        (l) => l.kind === "menu" && l.item.id === item.id,
+      );
       if (existing) {
         return prev.map((l) =>
-          l.item.id === item.id
+          l.kind === "menu" && l.item.id === item.id
             ? { ...l, quantity: Math.min(99, l.quantity + 1) }
             : l,
         );
       }
-      return [...prev, { key: newKey(), item, quantity: 1 }];
+      return [...prev, { key: newKey(), kind: "menu", item, quantity: 1 }];
     });
+  }
+
+  function addCustomLine() {
+    const name = customName.trim();
+    const quantity = Math.min(99, Math.max(1, Math.floor(Number(customQty) || 1)));
+    const dollars = Number(customPrice);
+    if (!name) {
+      setError("Custom items need a name.");
+      return;
+    }
+    if (!Number.isFinite(dollars) || dollars < 0) {
+      setError("Custom items need a price in dollars.");
+      return;
+    }
+    setError("");
+    setLines((prev) => [
+      ...prev,
+      {
+        key: newKey(),
+        kind: "custom",
+        name,
+        quantity,
+        unitPriceCents: Math.round(dollars * 100),
+        unitLabel: "each",
+      },
+    ]);
+    setCustomName("");
+    setCustomQty("1");
+    setCustomPrice("");
   }
 
   async function submit(andPrint: boolean) {
     setError("");
     if (lines.length === 0) {
-      setError("Add at least one menu item.");
+      setError("Add at least one item.");
       return;
     }
     setSaving(true);
@@ -96,10 +140,17 @@ export function NewOrderForm() {
           notes,
           paymentMethod,
           paymentStatus: paid ? "paid" : "unpaid",
-          items: lines.map((l) => ({
-            menuItemId: l.item.id,
-            quantity: l.quantity,
-          })),
+          items: lines.map((l) =>
+            l.kind === "custom"
+              ? {
+                  custom: true,
+                  name: l.name,
+                  quantity: l.quantity,
+                  unitPrice: l.unitPriceCents / 100,
+                  unitLabel: l.unitLabel,
+                }
+              : { menuItemId: l.item.id, quantity: l.quantity },
+          ),
         }),
       });
       if (res.status === 401) {
@@ -270,6 +321,44 @@ export function NewOrderForm() {
             Add item
           </button>
         </div>
+        <div className="rounded-xl bg-white p-3 ring-1 ring-linen">
+          <p className="text-sm font-medium text-espresso">Off-menu / special</p>
+          <p className="mt-1 text-xs text-muted">
+            Not on the public menu. Name, quantity, and price as sold.
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_4.5rem_6.5rem_auto]">
+            <input
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="e.g. Ensaymada"
+              className="rounded-xl border border-linen bg-cream px-3 py-2.5 text-sm"
+            />
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={customQty}
+              onChange={(e) => setCustomQty(e.target.value)}
+              aria-label="Custom quantity"
+              className="rounded-xl border border-linen bg-cream px-3 py-2.5 text-sm tabular-nums"
+            />
+            <input
+              inputMode="decimal"
+              value={customPrice}
+              onChange={(e) => setCustomPrice(e.target.value)}
+              placeholder="$"
+              aria-label="Custom price dollars"
+              className="rounded-xl border border-linen bg-cream px-3 py-2.5 text-sm tabular-nums"
+            />
+            <button
+              type="button"
+              onClick={addCustomLine}
+              className="rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-espresso ring-1 ring-linen"
+            >
+              Add custom
+            </button>
+          </div>
+        </div>
 
         {lines.length === 0 ? (
           <p className="text-sm text-muted">No items yet.</p>
@@ -281,10 +370,24 @@ export function NewOrderForm() {
                 className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
               >
                 <div>
-                  <p className="font-medium text-espresso">{line.item.name}</p>
+                  <p className="font-medium text-espresso">
+                    {line.kind === "custom" ? line.name : line.item.name}
+                    {line.kind === "custom" ? (
+                      <span className="ml-2 text-xs font-normal text-muted">
+                        custom
+                      </span>
+                    ) : null}
+                  </p>
                   <p className="text-xs text-muted">
-                    {formatPrice(line.item.priceCents)} /{" "}
-                    {UNIT_LABELS[line.item.unitLabel]}
+                    {formatPrice(
+                      line.kind === "custom"
+                        ? line.unitPriceCents
+                        : line.item.priceCents,
+                    )}{" "}
+                    /{" "}
+                    {line.kind === "custom"
+                      ? line.unitLabel
+                      : UNIT_LABELS[line.item.unitLabel]}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -310,7 +413,11 @@ export function NewOrderForm() {
                     />
                   </label>
                   <span className="w-20 text-right text-sm font-semibold tabular-nums text-espresso">
-                    {formatMoney(line.item.priceCents * line.quantity)}
+                    {formatMoney(
+                      (line.kind === "custom"
+                        ? line.unitPriceCents
+                        : line.item.priceCents) * line.quantity,
+                    )}
                   </span>
                   <button
                     type="button"

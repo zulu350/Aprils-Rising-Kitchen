@@ -125,11 +125,11 @@ export async function POST(request: Request) {
         totalCents,
         items: {
           create: lines.map((line) => ({
-            menuItemId: line.item.id,
-            name: line.item.name,
-            unitLabel: line.item.unitLabel,
+            menuItemId: line.menuItemId,
+            name: line.name,
+            unitLabel: line.unitLabel,
             quantity: line.quantity,
-            unitPriceCents: line.item.priceCents,
+            unitPriceCents: line.unitPriceCents,
             lineTotalCents: line.lineTotalCents,
           })),
         },

@@ -10,7 +10,7 @@ import { deliveryFeeCents } from "@/lib/delivery";
 import {
   validateAdminCreateOrder,
   type AdminCreateOrderInput,
-  type CartLineInput,
+  type AdminLineInput,
 } from "@/lib/orders";
 import {
   STAFF_PAYMENT_STATUS_ERROR,
@@ -234,6 +234,7 @@ export type StaffCreateQuote = {
       name: string;
       unit: string;
       quantity: number;
+      unitPrice: number;
       lineTotal: number;
     }>;
     subtotal: number;
@@ -248,6 +249,70 @@ export type StaffCreateQuote = {
 
 function asString(raw: unknown): string {
   return typeof raw === "string" ? raw : "";
+}
+
+function staffUnitLabel(unitLabel: string): string {
+  return UNIT_LABELS[unitLabel as keyof typeof UNIT_LABELS] ?? unitLabel;
+}
+
+function parseStaffLine(
+  raw: unknown,
+): { ok: true; value: AdminLineInput } | { ok: false; error: string } {
+  if (!raw || typeof raw !== "object") {
+    return {
+      ok: false,
+      error:
+        "Each item needs menuItemId and quantity, or custom: true with name and unitPrice.",
+    };
+  }
+  const row = raw as {
+    menuItemId?: unknown;
+    id?: unknown;
+    quantity?: unknown;
+    custom?: unknown;
+    name?: unknown;
+    unitPrice?: unknown;
+    unitPriceCents?: unknown;
+    unitLabel?: unknown;
+  };
+  const quantity = Math.floor(Number(row.quantity));
+  if (!Number.isFinite(quantity) || quantity < 1 || quantity > 99) {
+    return { ok: false, error: "Each item needs a quantity from 1 to 99." };
+  }
+  const custom =
+    row.custom === true || String(row.custom ?? "").toLowerCase() === "true";
+  if (custom) {
+    const name = asString(row.name).trim();
+    if (!name) {
+      return { ok: false, error: "Custom items need a name." };
+    }
+    return {
+      ok: true,
+      value: {
+        custom: true,
+        name,
+        quantity,
+        unitPrice:
+          typeof row.unitPrice === "number" || typeof row.unitPrice === "string"
+            ? row.unitPrice
+            : undefined,
+        unitPriceCents:
+          typeof row.unitPriceCents === "number"
+            ? row.unitPriceCents
+            : undefined,
+        unitLabel: asString(row.unitLabel).trim() || undefined,
+      },
+    };
+  }
+  const menuItemId = asString(row.menuItemId || row.id).trim();
+  if (!menuItemId) {
+    return {
+      ok: false,
+      error:
+        "Each item needs menuItemId and quantity, or custom: true with name and unitPrice.",
+    };
+  }
+  return { ok: true, value: { menuItemId, quantity } };
 }
 
 export function quoteStaffCreate(
@@ -268,25 +333,14 @@ export function quoteStaffCreate(
   if (!method.ok) return method;
 
   if (!Array.isArray(body.items) || body.items.length === 0) {
-    return { ok: false, error: "Add at least one menu item." };
+    return { ok: false, error: "Add at least one item." };
   }
 
-  const items: CartLineInput[] = [];
+  const items: AdminLineInput[] = [];
   for (const raw of body.items) {
-    if (!raw || typeof raw !== "object") {
-      return { ok: false, error: "Each item needs menuItemId and quantity." };
-    }
-    const row = raw as {
-      menuItemId?: unknown;
-      id?: unknown;
-      quantity?: unknown;
-    };
-    const menuItemId = asString(row.menuItemId || row.id).trim();
-    const quantity = Math.floor(Number(row.quantity));
-    if (!menuItemId) {
-      return { ok: false, error: "Each item needs menuItemId and quantity." };
-    }
-    items.push({ menuItemId, quantity });
+    const parsed = parseStaffLine(raw);
+    if (!parsed.ok) return parsed;
+    items.push(parsed.value);
   }
 
   let phoneValue = "";
@@ -334,11 +388,11 @@ export function quoteStaffCreate(
     quote: {
       input,
       lines: result.lines.map((line) => ({
-        menuItemId: line.item.id,
-        name: line.item.name,
-        unit: UNIT_LABELS[line.item.unitLabel],
+        menuItemId: line.menuItemId,
+        name: line.name,
+        unit: staffUnitLabel(line.unitLabel),
         quantity: line.quantity,
-        unitPriceCents: line.item.priceCents,
+        unitPriceCents: line.unitPriceCents,
         lineTotalCents: line.lineTotalCents,
       })),
       subtotalCents: result.subtotalCents,
@@ -352,10 +406,11 @@ export function quoteStaffCreate(
         payment: result.paymentStatus === "paid" ? "Paid" : "Unpaid",
         paymentMethod: staffPaymentMethodLabel(method.value),
         items: result.lines.map((line) => ({
-          menuItemId: line.item.id,
-          name: line.item.name,
-          unit: UNIT_LABELS[line.item.unitLabel],
+          menuItemId: line.menuItemId,
+          name: line.name,
+          unit: staffUnitLabel(line.unitLabel),
           quantity: line.quantity,
+          unitPrice: line.unitPriceCents / 100,
           lineTotal: line.lineTotalCents / 100,
         })),
         subtotal: result.subtotalCents / 100,

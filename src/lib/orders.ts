@@ -17,6 +17,103 @@ export type CartLineInput = {
   quantity: number;
 };
 
+/** Kitchen / staff create. Public checkout still uses CartLineInput only. */
+export type AdminLineInput = {
+  menuItemId?: string;
+  custom?: boolean;
+  name?: string;
+  quantity: number;
+  /** Dollars, e.g. 12 or 12.00 */
+  unitPrice?: number | string;
+  unitPriceCents?: number;
+  unitLabel?: string;
+};
+
+export type AdminResolvedLine = {
+  menuItemId: string;
+  name: string;
+  unitLabel: string;
+  unitPriceCents: number;
+  quantity: number;
+  lineTotalCents: number;
+};
+
+function dollarsToCents(raw: unknown): number | null {
+  if (raw === undefined || raw === null || raw === "") return null;
+  const n = typeof raw === "number" ? raw : Number(String(raw).trim());
+  if (!Number.isFinite(n) || n < 0 || n > 999) return null;
+  return Math.round(n * 100);
+}
+
+export function resolveAdminOrderLines(
+  items: AdminLineInput[],
+): { lines: AdminResolvedLine[]; error?: string } {
+  if (!Array.isArray(items) || items.length === 0) {
+    return { lines: [], error: "Add at least one item." };
+  }
+
+  const lines: AdminResolvedLine[] = [];
+  for (const raw of items) {
+    const quantity = Math.floor(Number(raw?.quantity));
+    if (!Number.isFinite(quantity) || quantity < 1 || quantity > 99) {
+      return { lines: [], error: "Each item needs a quantity from 1 to 99." };
+    }
+
+    const isCustom =
+      raw?.custom === true ||
+      String(raw?.custom ?? "").toLowerCase() === "true";
+
+    if (isCustom) {
+      const name = String(raw?.name ?? "").trim();
+      if (name.length < 1) {
+        return { lines: [], error: "Custom items need a name." };
+      }
+      let unitPriceCents =
+        typeof raw.unitPriceCents === "number" &&
+        Number.isFinite(raw.unitPriceCents)
+          ? Math.round(raw.unitPriceCents)
+          : dollarsToCents(raw.unitPrice);
+      if (unitPriceCents == null) {
+        return {
+          lines: [],
+          error: `Custom item “${name}” needs unitPrice (dollars).`,
+        };
+      }
+      if (unitPriceCents < 0 || unitPriceCents > 99_900) {
+        return { lines: [], error: `Invalid price for “${name}”.` };
+      }
+      const unitLabel = String(raw.unitLabel ?? "each").trim() || "each";
+      lines.push({
+        menuItemId: "custom",
+        name,
+        unitLabel,
+        unitPriceCents,
+        quantity,
+        lineTotalCents: unitPriceCents * quantity,
+      });
+      continue;
+    }
+
+    const menuItemId = String(raw?.menuItemId ?? "").trim();
+    const item = getMenuItem(menuItemId);
+    if (!item || !item.available) {
+      return {
+        lines: [],
+        error: `Unknown or unavailable item: ${menuItemId || "(missing)"}`,
+      };
+    }
+    lines.push({
+      menuItemId: item.id,
+      name: item.name,
+      unitLabel: item.unitLabel,
+      unitPriceCents: item.priceCents,
+      quantity,
+      lineTotalCents: item.priceCents * quantity,
+    });
+  }
+  return { lines };
+}
+
 export type CreateOrderInput = {
   customerName: string;
   email?: string;
@@ -151,21 +248,22 @@ export function validateCreateOrder(
   return { ok: true, lines, subtotalCents, email, preferredDate };
 }
 
-export type AdminCreateOrderInput = CreateOrderInput & {
+export type AdminCreateOrderInput = Omit<CreateOrderInput, "items"> & {
   paymentStatus?: "paid" | "unpaid";
+  items: AdminLineInput[];
 };
 
 /**
  * Kitchen-created orders (Facebook, walk-in, phone).
- * Same line/item rules as public checkout, but any fulfillment date is allowed
- * and phone/email may be omitted.
+ * Catalog lines or staff/kitchen custom lines. Any fulfillment date is allowed
+ * and phone/email may be omitted. Not used by public checkout.
  */
 export function validateAdminCreateOrder(
   body: AdminCreateOrderInput,
 ):
   | {
       ok: true;
-      lines: ResolvedLine[];
+      lines: AdminResolvedLine[];
       subtotalCents: number;
       email: string;
       preferredDate: string;
@@ -207,7 +305,7 @@ export function validateAdminCreateOrder(
     }
   }
 
-  const { lines, error } = resolveOrderLines(body.items ?? []);
+  const { lines, error } = resolveAdminOrderLines(body.items ?? []);
   if (error) return { ok: false, error };
 
   const method = body.paymentMethod ?? "undecided";
