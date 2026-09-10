@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/db";
+import { quoteOrderTotals } from "@/lib/delivery";
 import { resolveFulfillmentPatch } from "@/lib/fulfillment-update";
+import { resolveAdminOrderLines } from "@/lib/orders";
 import {
   parseStaffDate,
+  parseStaffLine,
   parseStaffNotes,
   parseStaffPayment,
   parseStaffPaymentMethodPatch,
@@ -47,7 +50,15 @@ async function findByOrderNumber(orderNumber: string) {
   return prisma.order.findUnique({
     where: { orderNumber },
     include: {
-      items: { select: { quantity: true, name: true, menuItemId: true } },
+      items: {
+        select: {
+          quantity: true,
+          name: true,
+          menuItemId: true,
+          unitPriceCents: true,
+          lineTotalCents: true,
+        },
+      },
     },
   });
 }
@@ -76,9 +87,9 @@ export async function GET(request: Request, { params }: Params) {
 
 /**
  * Writes: status, Paid/Unpaid, paymentMethod, fulfillment date, pickup↔delivery
- * (recalculates delivery fee), phone, notes.
+ * (recalculates delivery fee), phone, notes, full item replace (catalog or custom).
  * Unpaid does not clear paymentMethod. Pickup clears stored delivery address.
- * No item edits, no customer email, no notify email.
+ * No customer email.
  */
 export async function PATCH(request: Request, { params }: Params) {
   if (!isStaffAuthorized(request)) {
@@ -94,13 +105,6 @@ export async function PATCH(request: Request, { params }: Params) {
     body = (await request.json()) as PatchBody;
   } catch {
     return json({ error: "Invalid JSON body.", generatedAt }, 400);
-  }
-
-  if (body.items !== undefined) {
-    return json(
-      { error: "Item edits are not enabled on this endpoint.", generatedAt },
-      400,
-    );
   }
 
   const data: Record<string, unknown> = {};
@@ -171,17 +175,78 @@ export async function PATCH(request: Request, { params }: Params) {
       data.totalCents = fulfillment.value.totalCents;
     }
 
-    if (Object.keys(data).length === 0) {
+    let itemLines: ReturnType<typeof resolveAdminOrderLines>["lines"] | null =
+      null;
+    if (body.items !== undefined) {
+      if (!Array.isArray(body.items) || body.items.length === 0) {
+        return json({ error: "Add at least one item.", generatedAt }, 400);
+      }
+      const parsedItems = [];
+      for (const raw of body.items) {
+        const parsed = parseStaffLine(raw);
+        if (!parsed.ok) {
+          return json({ error: parsed.error, generatedAt }, 400);
+        }
+        parsedItems.push(parsed.value);
+      }
+      const resolved = resolveAdminOrderLines(parsedItems);
+      if (resolved.error) {
+        return json({ error: resolved.error, generatedAt }, 400);
+      }
+      itemLines = resolved.lines;
+      const nextFulfillment =
+        (data.fulfillment as string | undefined) ?? existing.fulfillment;
+      const subtotalCents = itemLines.reduce(
+        (sum, line) => sum + line.lineTotalCents,
+        0,
+      );
+      const quoted = quoteOrderTotals(
+        nextFulfillment,
+        subtotalCents,
+        existing.adjustmentCents,
+      );
+      data.subtotalCents = subtotalCents;
+      data.deliveryFeeCents = quoted.deliveryFeeCents;
+      data.totalCents = quoted.totalCents;
+    }
+
+    if (Object.keys(data).length === 0 && !itemLines) {
       return json({ error: "Nothing to update.", generatedAt }, 400);
     }
 
-    const order = await prisma.order.update({
-      where: { orderNumber },
-      data,
-      include: {
-        items: { select: { quantity: true, name: true, menuItemId: true } },
-      },
-    });
+    const itemSelect = {
+      quantity: true,
+      name: true,
+      menuItemId: true,
+      unitPriceCents: true,
+      lineTotalCents: true,
+    } as const;
+
+    const order = itemLines
+      ? await prisma.$transaction(async (tx) => {
+          await tx.orderItem.deleteMany({ where: { orderId: existing.id } });
+          await tx.orderItem.createMany({
+            data: itemLines.map((line) => ({
+              orderId: existing.id,
+              menuItemId: line.menuItemId,
+              name: line.name,
+              unitLabel: line.unitLabel,
+              quantity: line.quantity,
+              unitPriceCents: line.unitPriceCents,
+              lineTotalCents: line.lineTotalCents,
+            })),
+          });
+          return tx.order.update({
+            where: { orderNumber },
+            data,
+            include: { items: { select: itemSelect } },
+          });
+        })
+      : await prisma.order.update({
+          where: { orderNumber },
+          data,
+          include: { items: { select: itemSelect } },
+        });
 
     return json({
       generatedAt: new Date().toISOString(),

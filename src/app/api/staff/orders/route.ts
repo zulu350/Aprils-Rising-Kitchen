@@ -26,7 +26,13 @@ export const dynamic = "force-dynamic";
 
 const LIST_INCLUDE = {
   items: {
-    select: { quantity: true, name: true, menuItemId: true },
+    select: {
+      quantity: true,
+      name: true,
+      menuItemId: true,
+      unitPriceCents: true,
+      lineTotalCents: true,
+    },
   },
 } as const;
 

@@ -42,7 +42,13 @@ export type StaffOrderRow = {
   customerPhone: string | null;
   customerEmail: string | null;
   placedAt: string;
-  items: Array<{ quantity: number; name: string; menuItemId: string }>;
+  items: Array<{
+    quantity: number;
+    name: string;
+    menuItemId: string;
+    unitPrice: number;
+    lineTotal: number;
+  }>;
 };
 
 type OrderLike = {
@@ -63,7 +69,13 @@ type OrderLike = {
   phone: string;
   email?: string | null;
   createdAt: Date;
-  items: Array<{ quantity: number; name: string; menuItemId?: string }>;
+  items: Array<{
+    quantity: number;
+    name: string;
+    menuItemId?: string;
+    unitPriceCents?: number;
+    lineTotalCents?: number;
+  }>;
 };
 
 export function staffPhone(phone: string): string | null {
@@ -97,6 +109,8 @@ export function toStaffOrderRow(order: OrderLike): StaffOrderRow {
       quantity: item.quantity,
       name: item.name,
       menuItemId: item.menuItemId ?? "",
+      unitPrice: (item.unitPriceCents ?? 0) / 100,
+      lineTotal: (item.lineTotalCents ?? 0) / 100,
     })),
   };
 }
@@ -255,7 +269,7 @@ function staffUnitLabel(unitLabel: string): string {
   return UNIT_LABELS[unitLabel as keyof typeof UNIT_LABELS] ?? unitLabel;
 }
 
-function parseStaffLine(
+export function parseStaffLine(
   raw: unknown,
 ): { ok: true; value: AdminLineInput } | { ok: false; error: string } {
   if (!raw || typeof raw !== "object") {
