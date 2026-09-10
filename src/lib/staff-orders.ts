@@ -326,7 +326,21 @@ export function parseStaffLine(
         "Each item needs menuItemId and quantity, or custom: true with name and unitPrice.",
     };
   }
-  return { ok: true, value: { menuItemId, quantity } };
+  return {
+    ok: true,
+    value: {
+      menuItemId,
+      quantity,
+      unitPrice:
+        typeof row.unitPrice === "number" || typeof row.unitPrice === "string"
+          ? row.unitPrice
+          : undefined,
+      unitPriceCents:
+        typeof row.unitPriceCents === "number"
+          ? row.unitPriceCents
+          : undefined,
+    },
+  };
 }
 
 export function quoteStaffCreate(

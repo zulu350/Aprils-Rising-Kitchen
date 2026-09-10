@@ -102,13 +102,25 @@ export function resolveAdminOrderLines(
         error: `Unknown or unavailable item: ${menuItemId || "(missing)"}`,
       };
     }
+    let unitPriceCents = item.priceCents;
+    const override =
+      typeof raw.unitPriceCents === "number" &&
+      Number.isFinite(raw.unitPriceCents)
+        ? Math.round(raw.unitPriceCents)
+        : dollarsToCents(raw.unitPrice);
+    if (override != null) {
+      if (override < 0 || override > 99_900) {
+        return { lines: [], error: `Invalid price for “${item.name}”.` };
+      }
+      unitPriceCents = override;
+    }
     lines.push({
       menuItemId: item.id,
       name: item.name,
       unitLabel: item.unitLabel,
-      unitPriceCents: item.priceCents,
+      unitPriceCents,
       quantity,
-      lineTotalCents: item.priceCents * quantity,
+      lineTotalCents: unitPriceCents * quantity,
     });
   }
   return { lines };
