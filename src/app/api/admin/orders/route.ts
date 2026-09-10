@@ -24,12 +24,18 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const q = searchParams.get("q")?.trim() ?? "";
+  const customRaw = searchParams.get("custom")?.trim().toLowerCase();
+  const customOnly =
+    customRaw === "true" || customRaw === "1" || customRaw === "yes";
   const statusWhere =
     status && status !== "all"
       ? { status }
       : status === "all"
         ? {}
         : { status: { notIn: ["completed", "cancelled"] } };
+  const customWhere = customOnly
+    ? { items: { some: { menuItemId: "custom" } } }
+    : {};
 
   const digits = q.replace(/\D/g, "");
   const searchWhere = q
@@ -52,7 +58,7 @@ export async function GET(request: Request) {
     : {};
 
   const orders = await prisma.order.findMany({
-    where: { AND: [statusWhere, searchWhere] },
+    where: { AND: [statusWhere, searchWhere, customWhere] },
     include: { items: true },
     orderBy: [{ preferredDate: "asc" }, { createdAt: "desc" }],
   });

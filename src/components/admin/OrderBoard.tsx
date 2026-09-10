@@ -25,7 +25,7 @@ type OrderRow = {
   paymentMethod: string;
   totalCents: number;
   createdAt: string;
-  items: Array<{ name: string; quantity: number }>;
+  items: Array<{ name: string; quantity: number; menuItemId?: string }>;
 };
 
 type SortKey =
@@ -128,6 +128,7 @@ function formatPlaced(iso: string): string {
 
 export function OrderBoard() {
   const [filter, setFilter] = useState("active");
+  const [customOnly, setCustomOnly] = useState(false);
   const [sort, setSort] = useState<SortKey>("preferredDateUpcoming");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -146,6 +147,7 @@ export function OrderBoard() {
     try {
       const params = new URLSearchParams();
       if (filter !== "active") params.set("status", filter);
+      if (customOnly) params.set("custom", "true");
       if (search) params.set("q", search);
       const qs = params.toString();
       const res = await fetch(`/api/admin/orders${qs ? `?${qs}` : ""}`);
@@ -165,7 +167,7 @@ export function OrderBoard() {
     } finally {
       setLoading(false);
     }
-  }, [filter, search]);
+  }, [filter, customOnly, search]);
 
   useEffect(() => {
     void load();
@@ -191,6 +193,18 @@ export function OrderBoard() {
               {f.label}
             </button>
           ))}
+          <button
+            type="button"
+            aria-pressed={customOnly}
+            onClick={() => setCustomOnly((on) => !on)}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold sm:text-sm ${
+              customOnly
+                ? "bg-espresso text-white"
+                : "bg-cream text-brown ring-1 ring-linen"
+            }`}
+          >
+            Custom
+          </button>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
@@ -252,7 +266,9 @@ export function OrderBoard() {
           <p className="mt-2 text-sm text-muted">
             {search
               ? "Nothing matches that search in this tab. Try All to include completed orders."
-              : "New customer orders will show up in Active."}
+              : customOnly
+                ? "No off-menu custom lines in this tab."
+                : "New customer orders will show up in Active."}
           </p>
         </div>
       ) : (
@@ -283,6 +299,11 @@ export function OrderBoard() {
                           Unpaid
                         </span>
                       )}
+                      {order.items.some((item) => item.menuItemId === "custom") ? (
+                        <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-semibold text-brown">
+                          Custom
+                        </span>
+                      ) : null}
                     </div>
                     <p className="mt-2 text-xl font-semibold leading-snug tracking-tight text-espresso sm:text-2xl">
                       {formatDateLabel(order.preferredDate)}

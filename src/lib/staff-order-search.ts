@@ -22,6 +22,8 @@ export type StaffListQuery = {
   name?: string;
   item?: string;
   menuItemId?: string;
+  /** Alias for menuItemId=custom when true. */
+  custom?: boolean;
   statuses?: string[];
   payment?: "paid" | "unpaid";
   paymentMethod?: StaffPaymentMethod;
@@ -152,12 +154,20 @@ export function parseStaffListSearch(
 
   const hasPhone = parseBool(search.get("hasPhone"));
   const hasEmail = parseBool(search.get("hasEmail"));
+  const custom = parseBool(search.get("custom"));
   if (search.get("hasPhone") && hasPhone === undefined) {
     return { ok: false, error: "hasPhone must be true or false." };
   }
   if (search.get("hasEmail") && hasEmail === undefined) {
     return { ok: false, error: "hasEmail must be true or false." };
   }
+  if (search.get("custom") && custom === undefined) {
+    return { ok: false, error: "custom must be true or false." };
+  }
+
+  const menuItemId =
+    search.get("menuItemId")?.trim() ||
+    (custom === true ? "custom" : undefined);
 
   return {
     ok: true,
@@ -167,7 +177,7 @@ export function parseStaffListSearch(
       email: search.get("email")?.trim() || undefined,
       name: search.get("name")?.trim() || undefined,
       item: search.get("item")?.trim() || undefined,
-      menuItemId: search.get("menuItemId")?.trim() || undefined,
+      menuItemId,
       statuses: statuses.length ? statuses : undefined,
       payment,
       paymentMethod,
@@ -184,6 +194,7 @@ export function parseStaffListSearch(
       maxTotalCents: parseDollarsToCents(search.get("maxTotal")),
       hasPhone,
       hasEmail,
+      custom,
       limit,
       offset,
       sort,
@@ -229,6 +240,8 @@ export function staffListPrismaWhere(
   }
   if (query.menuItemId) {
     and.push({ items: { some: { menuItemId: query.menuItemId } } });
+  } else if (query.custom === false) {
+    and.push({ NOT: { items: { some: { menuItemId: "custom" } } } });
   }
   if (query.statuses?.length) {
     and.push({ status: { in: query.statuses } });
