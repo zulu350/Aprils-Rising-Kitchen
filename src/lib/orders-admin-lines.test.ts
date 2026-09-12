@@ -20,11 +20,11 @@ test("catalog cheese rolls still uses menu price", () => {
     { menuItemId: "cheese-rolls", quantity: 1 },
   ]);
   assert.equal(result.error, undefined);
-  assert.equal(result.lines[0]?.name, "Cheese Rolls");
+  assert.equal(result.lines[0]?.name, "Pinoy Cheese Bread");
   assert.equal(result.lines[0]?.unitPriceCents, 2500);
 });
 
-test("staff preview Cheese Rolls unitPrice 12 pickup totals $12", () => {
+test("staff preview Pinoy Cheese Bread unitPrice 12 pickup totals $12", () => {
   const quoted = quoteStaffCreate({
     customerName: "Gilda",
     items: [{ menuItemId: "cheese-rolls", quantity: 1, unitPrice: 12 }],
@@ -36,7 +36,7 @@ test("staff preview Cheese Rolls unitPrice 12 pickup totals $12", () => {
   if (!quoted.ok) return;
   assert.equal(quoted.quote.preview.total, 12);
   assert.equal(quoted.quote.preview.items[0]?.menuItemId, "cheese-rolls");
-  assert.equal(quoted.quote.preview.items[0]?.name, "Cheese Rolls");
+  assert.equal(quoted.quote.preview.items[0]?.name, "Pinoy Cheese Bread");
 });
 
 test("catalog cheese rolls honors staff unitPrice override", () => {
@@ -45,7 +45,7 @@ test("catalog cheese rolls honors staff unitPrice override", () => {
   ]);
   assert.equal(result.error, undefined);
   assert.equal(result.lines[0]?.menuItemId, "cheese-rolls");
-  assert.equal(result.lines[0]?.name, "Cheese Rolls");
+  assert.equal(result.lines[0]?.name, "Pinoy Cheese Bread");
   assert.equal(result.lines[0]?.unitPriceCents, 1200);
   assert.equal(result.lines[0]?.lineTotalCents, 1200);
 });

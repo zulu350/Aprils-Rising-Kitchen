@@ -186,7 +186,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: "pandan-ube-pandesal",
-    name: "Pandan Pandesal with Ube Filling",
+    name: "Pandan Pandesal",
     category: "rolls",
     unitLabel: "dozen",
     priceCents: 2500,
@@ -287,11 +287,11 @@ export const menuItems: MenuItem[] = [
     unitLabel: "dozen",
     priceCents: 2500,
     leadTimeHours: 24,
-    available: true,
+    available: false,
   },
   {
     id: "cheese-rolls",
-    name: "Cheese Rolls",
+    name: "Pinoy Cheese Bread",
     category: "rolls",
     unitLabel: "dozen",
     priceCents: 2500,
