@@ -11,16 +11,16 @@ test("6% rounds to nearest cent on product", () => {
   assert.equal(salesTaxCents(-100), 0);
 });
 
-test("pickup Pinoy Cheese Bread $24 plus tax", () => {
-  const quoted = quoteOrderTotals("pickup", 2400);
+test("pickup Pinoy Cheese Bread $25 plus tax", () => {
+  const quoted = quoteOrderTotals("pickup", 2500);
   assert.equal(quoted.deliveryFeeCents, 0);
-  assert.equal(quoted.taxCents, 144);
-  assert.equal(quoted.totalCents, 2544);
+  assert.equal(quoted.taxCents, 150);
+  assert.equal(quoted.totalCents, 2650);
 });
 
 test("delivery does not get tax", () => {
-  const quoted = quoteOrderTotals("delivery", 1900);
+  const quoted = quoteOrderTotals("delivery", 2000);
   assert.equal(quoted.deliveryFeeCents, 800);
-  assert.equal(quoted.taxCents, 114);
-  assert.equal(quoted.totalCents, 1900 + 800 + 114);
+  assert.equal(quoted.taxCents, 120);
+  assert.equal(quoted.totalCents, 2000 + 800 + 120);
 });
