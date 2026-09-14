@@ -11,7 +11,7 @@ import {
 } from "@/data/menu";
 import { formatMoney } from "@/lib/admin-orders";
 import { nowInBoise, toISODate } from "@/lib/availability";
-import { deliveryFeeCents } from "@/lib/delivery";
+import { quoteOrderTotals } from "@/lib/delivery";
 
 type Line =
   | { key: string; kind: "menu"; item: MenuItem; quantity: number }
@@ -66,8 +66,10 @@ export function NewOrderForm() {
       }, 0),
     [lines],
   );
-  const feeCents = deliveryFeeCents(fulfillment, subtotalCents);
-  const totalCents = subtotalCents + feeCents;
+  const quoted = quoteOrderTotals(fulfillment, subtotalCents);
+  const feeCents = quoted.deliveryFeeCents;
+  const taxCents = quoted.taxCents;
+  const totalCents = quoted.totalCents;
 
   function addLine() {
     const item = availableItems.find((i) => i.id === addItemId);
@@ -442,6 +444,9 @@ export function NewOrderForm() {
               </span>
             </p>
           ) : null}
+          <p className="text-sm text-muted tabular-nums">
+            Tax {formatMoney(taxCents)}
+          </p>
           <p className="text-lg font-semibold tabular-nums text-espresso">
             Total {formatMoney(totalCents)}
           </p>

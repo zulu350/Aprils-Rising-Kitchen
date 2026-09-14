@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendNewOrderEmails } from "@/lib/email";
-import { deliveryFeeCents as calcDeliveryFee } from "@/lib/delivery";
+import { quoteOrderTotals } from "@/lib/delivery";
 import {
   nextOrderNumber,
   validateAdminCreateOrder,
@@ -92,8 +92,10 @@ export async function POST(request: Request) {
     phone,
     paymentStatus,
   } = result;
-  const deliveryFeeCents = calcDeliveryFee(body.fulfillment, subtotalCents);
-  const totalCents = subtotalCents + deliveryFeeCents;
+  const quoted = quoteOrderTotals(body.fulfillment, subtotalCents);
+  const deliveryFeeCents = quoted.deliveryFeeCents;
+  const taxCents = quoted.taxCents;
+  const totalCents = quoted.totalCents;
 
   try {
     const orderNumber = await nextOrderNumber(async () => {
@@ -128,6 +130,7 @@ export async function POST(request: Request) {
         paymentStatus,
         subtotalCents,
         deliveryFeeCents,
+        taxCents,
         totalCents,
         items: {
           create: lines.map((line) => ({
@@ -162,6 +165,7 @@ export async function POST(request: Request) {
         squareWallet: order.squareWallet,
         subtotalCents: order.subtotalCents,
         deliveryFeeCents: order.deliveryFeeCents,
+        taxCents: order.taxCents,
         totalCents: order.totalCents,
         createdAt: order.createdAt.toISOString(),
         items: order.items.map((item) => ({

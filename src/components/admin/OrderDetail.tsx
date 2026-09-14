@@ -13,7 +13,7 @@ import {
 } from "@/lib/admin-orders";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
-import { deliveryFeeCents } from "@/lib/delivery";
+import { quoteOrderTotals } from "@/lib/delivery";
 import { PAYMENT_METHOD_LABELS, squareMethodLabel } from "@/lib/payment";
 import {
   MileagePanel,
@@ -52,6 +52,7 @@ type OrderDetailData = {
   squareWallet?: string | null;
   subtotalCents: number;
   deliveryFeeCents?: number;
+  taxCents?: number;
   totalCents: number;
   createdAt: string;
   pickupAddress: string | null;
@@ -171,12 +172,15 @@ export function OrderDetail({ id }: { id: string }) {
       lines.reduce((s, l) => s + l.unitPriceCents * Math.max(0, l.quantity), 0),
     [lines],
   );
-  const previewDeliveryFee = deliveryFeeCents(
+  const previewAdjustment = dollarsToCents(adjustmentDollars);
+  const previewQuoted = quoteOrderTotals(
     editing ? fulfillment : (order?.fulfillment ?? "pickup"),
     previewSubtotal,
+    previewAdjustment,
   );
-  const previewAdjustment = dollarsToCents(adjustmentDollars);
-  const previewTotal = previewSubtotal + previewDeliveryFee + previewAdjustment;
+  const previewDeliveryFee = previewQuoted.deliveryFeeCents;
+  const previewTax = previewQuoted.taxCents;
+  const previewTotal = previewQuoted.totalCents;
 
   async function patch(body: {
     status?: OrderStatus;
@@ -646,6 +650,14 @@ export function OrderDetail({ id }: { id: string }) {
                 </span>
               </div>
             ) : null}
+            {(order.taxCents ?? 0) > 0 ? (
+              <div className="flex justify-between border-t border-linen pt-3 text-sm">
+                <span>Tax</span>
+                <span className="tabular-nums">
+                  {formatMoney(order.taxCents ?? 0)}
+                </span>
+              </div>
+            ) : null}
             <div className="flex justify-between border-t border-linen pt-3 font-semibold text-espresso">
               <span>Amount owed</span>
               <span className="tabular-nums">
@@ -938,6 +950,10 @@ export function OrderDetail({ id }: { id: string }) {
                   </span>
                 </div>
               ) : null}
+              <div className="mt-1 flex justify-between text-muted">
+                <span>Tax</span>
+                <span className="tabular-nums">{formatMoney(previewTax)}</span>
+              </div>
               <div className="mt-2 flex justify-between font-semibold text-espresso">
                 <span>Amount owed</span>
                 <span className="tabular-nums">

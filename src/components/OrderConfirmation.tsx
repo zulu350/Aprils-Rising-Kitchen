@@ -38,6 +38,7 @@ type OrderPayload = {
   squareWallet?: string | null;
   subtotalCents: number;
   deliveryFeeCents?: number;
+  taxCents?: number;
   totalCents: number;
   createdAt?: string;
   items: Array<{
@@ -311,6 +312,15 @@ export function OrderConfirmation({
             <span className="tabular-nums">
               {(order.adjustmentCents ?? 0) > 0 ? "+" : ""}
               {formatPrice(order.adjustmentCents ?? 0)}
+            </span>
+          </div>
+        ) : null}
+
+        {(order.taxCents ?? 0) > 0 ? (
+          <div className="flex justify-between text-sm text-brown">
+            <span>Tax</span>
+            <span className="tabular-nums">
+              {formatPrice(order.taxCents ?? 0)}
             </span>
           </div>
         ) : null}

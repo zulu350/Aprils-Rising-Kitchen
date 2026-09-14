@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendNewOrderEmails } from "@/lib/email";
 import { validateFulfillmentDate } from "@/lib/availability";
-import { deliveryFeeCents as calcDeliveryFee } from "@/lib/delivery";
+import { quoteOrderTotals } from "@/lib/delivery";
 import {
   nextOrderNumber,
   validateCreateOrder,
@@ -30,8 +30,10 @@ export async function POST(request: Request) {
   }
 
   const { lines, subtotalCents, email, preferredDate } = result;
-  const deliveryFeeCents = calcDeliveryFee(body.fulfillment, subtotalCents);
-  const totalCents = subtotalCents + deliveryFeeCents;
+  const quoted = quoteOrderTotals(body.fulfillment, subtotalCents);
+  const deliveryFeeCents = quoted.deliveryFeeCents;
+  const taxCents = quoted.taxCents;
+  const totalCents = quoted.totalCents;
   const itemIds = lines.map((l) => l.item.id);
 
   try {
@@ -91,6 +93,7 @@ export async function POST(request: Request) {
         paymentStatus: "unpaid",
         subtotalCents,
         deliveryFeeCents,
+        taxCents,
         totalCents,
         items: {
           create: lines.map((line) => ({
@@ -127,6 +130,7 @@ export async function POST(request: Request) {
         squareWallet: order.squareWallet,
         subtotalCents: order.subtotalCents,
         deliveryFeeCents: order.deliveryFeeCents,
+        taxCents: order.taxCents,
         totalCents: order.totalCents,
         createdAt: order.createdAt.toISOString(),
         items: order.items.map((item) => ({

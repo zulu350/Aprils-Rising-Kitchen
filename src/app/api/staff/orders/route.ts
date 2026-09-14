@@ -179,6 +179,7 @@ export async function POST(request: Request) {
         paymentStatus: quote.preview.payment === "Paid" ? "paid" : "unpaid",
         subtotalCents: quote.subtotalCents,
         deliveryFeeCents: quote.deliveryFeeCents,
+        taxCents: quote.taxCents,
         totalCents: quote.totalCents,
         items: {
           create: quote.lines.map((line) => ({
@@ -214,6 +215,7 @@ export async function POST(request: Request) {
           paymentStatus: order.paymentStatus,
           subtotalCents: order.subtotalCents,
           deliveryFeeCents: order.deliveryFeeCents,
+          taxCents: order.taxCents,
           totalCents: order.totalCents,
           createdAt: order.createdAt.toISOString(),
           createdVia: "staff-api",

@@ -1,3 +1,5 @@
+import { salesTaxCents } from "@/lib/tax";
+
 /** Delivery in Boise & Meridian: $8 under $30, free at $30 and up. Pickup is never charged. */
 
 export const DELIVERY_FEE_CENTS = 800;
@@ -14,15 +16,17 @@ export function deliveryFeeCents(
   return subtotalCents >= FREE_DELIVERY_MIN_CENTS ? 0 : DELIVERY_FEE_CENTS;
 }
 
-/** Product + delivery + kitchen adjustment. Fee from the same rules as checkout. */
+/** Product + tax + delivery + kitchen adjustment. Tax is 6% of product (incl. adjustment), not delivery. */
 export function quoteOrderTotals(
   fulfillment: string,
   subtotalCents: number,
   adjustmentCents = 0,
-): { deliveryFeeCents: number; totalCents: number } {
+): { deliveryFeeCents: number; taxCents: number; totalCents: number } {
   const fee = deliveryFeeCents(fulfillment, subtotalCents);
+  const tax = salesTaxCents(subtotalCents + adjustmentCents);
   return {
     deliveryFeeCents: fee,
-    totalCents: subtotalCents + fee + adjustmentCents,
+    taxCents: tax,
+    totalCents: subtotalCents + fee + tax + adjustmentCents,
   };
 }

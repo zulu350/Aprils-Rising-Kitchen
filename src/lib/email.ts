@@ -23,6 +23,7 @@ export type OrderEmailPayload = {
   squareWallet?: string | null;
   subtotalCents: number;
   deliveryFeeCents?: number;
+  taxCents?: number;
   adjustmentCents?: number;
   adjustmentLabel?: string | null;
   totalCents: number;
@@ -135,6 +136,10 @@ function itemsListText(order: OrderEmailPayload): string {
     lines.push(
       `  • ${label} — ${sign}${formatPrice(order.adjustmentCents)}`,
     );
+  }
+  const tax = order.taxCents ?? 0;
+  if (tax > 0) {
+    lines.push(`  • Tax — ${formatPrice(tax)}`);
   }
   return lines.join("\n");
 }

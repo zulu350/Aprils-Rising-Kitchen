@@ -6,7 +6,7 @@ import {
   type PaymentStatus,
 } from "@/lib/admin-orders";
 import { UNIT_LABELS } from "@/data/menu";
-import { deliveryFeeCents } from "@/lib/delivery";
+import { quoteOrderTotals } from "@/lib/delivery";
 import {
   validateAdminCreateOrder,
   type AdminCreateOrderInput,
@@ -34,6 +34,7 @@ export type StaffOrderRow = {
   preferredTimeWindow: string | null;
   total: number;
   deliveryFee: number;
+  tax: number;
   fulfillmentDate: string;
   fulfillmentType: "pickup" | "delivery";
   deliveryCity: string | null;
@@ -61,6 +62,7 @@ type OrderLike = {
   preferredTimeWindow?: string | null;
   totalCents: number;
   deliveryFeeCents?: number;
+  taxCents?: number;
   preferredDate: string;
   fulfillment: string;
   deliveryCity?: string | null;
@@ -97,6 +99,7 @@ export function toStaffOrderRow(order: OrderLike): StaffOrderRow {
     preferredTimeWindow: staffText(order.preferredTimeWindow),
     total: order.totalCents / 100,
     deliveryFee: (order.deliveryFeeCents ?? 0) / 100,
+    tax: (order.taxCents ?? 0) / 100,
     fulfillmentDate: order.preferredDate,
     fulfillmentType: order.fulfillment === "delivery" ? "delivery" : "pickup",
     deliveryCity: staffText(order.deliveryCity),
@@ -235,6 +238,7 @@ export type StaffCreateQuote = {
   }>;
   subtotalCents: number;
   deliveryFeeCents: number;
+  taxCents: number;
   totalCents: number;
   preview: {
     customerName: string;
@@ -253,6 +257,7 @@ export type StaffCreateQuote = {
     }>;
     subtotal: number;
     deliveryFee: number;
+    tax: number;
     total: number;
     notes: string | null;
     preferredTimeWindow: string | null;
@@ -408,8 +413,7 @@ export function quoteStaffCreate(
   const result = validateAdminCreateOrder(input);
   if (!result.ok) return result;
 
-  const feeCents = deliveryFeeCents(input.fulfillment, result.subtotalCents);
-  const totalCents = result.subtotalCents + feeCents;
+  const quoted = quoteOrderTotals(input.fulfillment, result.subtotalCents);
 
   return {
     ok: true,
@@ -424,8 +428,9 @@ export function quoteStaffCreate(
         lineTotalCents: line.lineTotalCents,
       })),
       subtotalCents: result.subtotalCents,
-      deliveryFeeCents: feeCents,
-      totalCents,
+      deliveryFeeCents: quoted.deliveryFeeCents,
+      taxCents: quoted.taxCents,
+      totalCents: quoted.totalCents,
       preview: {
         customerName: input.customerName.trim(),
         customerPhone: staffPhone(result.phone),
@@ -442,8 +447,9 @@ export function quoteStaffCreate(
           lineTotal: line.lineTotalCents / 100,
         })),
         subtotal: result.subtotalCents / 100,
-        deliveryFee: feeCents / 100,
-        total: totalCents / 100,
+        deliveryFee: quoted.deliveryFeeCents / 100,
+        tax: quoted.taxCents / 100,
+        total: quoted.totalCents / 100,
         notes: input.notes?.trim() || null,
         preferredTimeWindow: input.preferredTimeWindow?.trim() || null,
         deliveryCity: input.deliveryCity ?? null,

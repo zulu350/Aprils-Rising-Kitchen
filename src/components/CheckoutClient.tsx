@@ -10,7 +10,7 @@ import {
 import { PaymentQrPanel } from "@/components/PaymentQrPanel";
 import { useCart } from "@/lib/cart";
 import { BUSINESS } from "@/lib/constants";
-import { deliveryFeeCents } from "@/lib/delivery";
+import { quoteOrderTotals } from "@/lib/delivery";
 import { MESSAGING, type DateSlot } from "@/lib/availability";
 import type { PaymentMethodPreference } from "@/lib/payment";
 
@@ -84,8 +84,10 @@ export function CheckoutClient() {
     );
   }
 
-  const feeCents = deliveryFeeCents(fulfillment, subtotalCents);
-  const totalCents = subtotalCents + feeCents;
+  const quoted = quoteOrderTotals(fulfillment, subtotalCents);
+  const feeCents = quoted.deliveryFeeCents;
+  const taxCents = quoted.taxCents;
+  const totalCents = quoted.totalCents;
 
   if (itemCount === 0) {
     return (
@@ -460,8 +462,12 @@ export function CheckoutClient() {
             <div className="mt-4 border-t border-linen pt-4" />
           )}
           <div
-            className={`flex justify-between font-semibold text-espresso ${fulfillment === "delivery" ? "mt-2" : ""}`}
+            className={`flex justify-between text-sm text-brown ${fulfillment === "delivery" ? "mt-2" : ""}`}
           >
+            <span>Tax</span>
+            <span className="tabular-nums">{formatPrice(taxCents)}</span>
+          </div>
+          <div className="mt-2 flex justify-between font-semibold text-espresso">
             <span>Total</span>
             <span className="tabular-nums">{formatPrice(totalCents)}</span>
           </div>

@@ -65,6 +65,7 @@ export async function GET(request: Request, { params }: Params) {
     squareWallet: order.squareWallet,
     subtotalCents: order.subtotalCents,
     deliveryFeeCents: order.deliveryFeeCents,
+    taxCents: order.taxCents,
     adjustmentCents: order.adjustmentCents,
     adjustmentLabel: order.adjustmentLabel,
     adminNote: order.adminNote,

@@ -25,6 +25,7 @@ export type FulfillmentPatchResult = {
   deliveryCity: string | null;
   deliveryAddress: string | null;
   deliveryFeeCents: number;
+  taxCents: number;
   totalCents: number;
 };
 
@@ -123,6 +124,7 @@ export function resolveFulfillmentPatch(
         deliveryCity: null,
         deliveryAddress: null,
         deliveryFeeCents: money.deliveryFeeCents,
+        taxCents: money.taxCents,
         totalCents: money.totalCents,
       },
     };
@@ -176,6 +178,7 @@ export function resolveFulfillmentPatch(
       deliveryCity: city,
       deliveryAddress: address,
       deliveryFeeCents: money.deliveryFeeCents,
+      taxCents: money.taxCents,
       totalCents: money.totalCents,
     },
   };

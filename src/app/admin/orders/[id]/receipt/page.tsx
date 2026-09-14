@@ -43,6 +43,7 @@ export default async function AdminReceiptPage({ params, searchParams }: Props) 
         squareWallet: order.squareWallet,
         subtotalCents: order.subtotalCents,
         deliveryFeeCents: order.deliveryFeeCents,
+        taxCents: order.taxCents,
         adjustmentCents: order.adjustmentCents,
         adjustmentLabel: order.adjustmentLabel,
         totalCents: order.totalCents,

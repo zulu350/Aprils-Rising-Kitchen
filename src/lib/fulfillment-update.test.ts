@@ -22,7 +22,8 @@ test("pickup to delivery adds $8 under $30", () => {
   assert.equal(result.value.deliveryCity, "Boise");
   assert.equal(result.value.deliveryAddress, "123 Main St");
   assert.equal(result.value.deliveryFeeCents, 800);
-  assert.equal(result.value.totalCents, 2500);
+  assert.equal(result.value.taxCents, 102);
+  assert.equal(result.value.totalCents, 2602);
 });
 
 test("delivery to pickup clears address and fee", () => {
@@ -42,7 +43,8 @@ test("delivery to pickup clears address and fee", () => {
   assert.equal(result.value.deliveryCity, null);
   assert.equal(result.value.deliveryAddress, null);
   assert.equal(result.value.deliveryFeeCents, 0);
-  assert.equal(result.value.totalCents, 1700);
+  assert.equal(result.value.taxCents, 102);
+  assert.equal(result.value.totalCents, 1802);
 });
 
 test("delivery without address is 400", () => {
@@ -85,7 +87,8 @@ test("$30+ delivery is free", () => {
   if (!result.ok || !result.changed) throw new Error("expected change");
   assert.equal(result.value.deliveryCity, "Meridian");
   assert.equal(result.value.deliveryFeeCents, 0);
-  assert.equal(result.value.totalCents, 3000);
+  assert.equal(result.value.taxCents, 180);
+  assert.equal(result.value.totalCents, 3180);
 });
 
 test("keeps kitchen adjustment in the new total", () => {
@@ -99,5 +102,6 @@ test("keeps kitchen adjustment in the new total", () => {
   );
   assert.equal(result.ok, true);
   if (!result.ok || !result.changed) throw new Error("expected change");
-  assert.equal(result.value.totalCents, 2300);
+  assert.equal(result.value.taxCents, 90);
+  assert.equal(result.value.totalCents, 2390);
 });

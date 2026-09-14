@@ -342,6 +342,7 @@ export async function PATCH(request: Request, { params }: Params) {
           adjustmentCents,
         );
         data.deliveryFeeCents = quoted.deliveryFeeCents;
+        data.taxCents = quoted.taxCents;
         data.totalCents = quoted.totalCents;
       } else if (
         body.adjustmentCents !== undefined ||
@@ -355,6 +356,7 @@ export async function PATCH(request: Request, { params }: Params) {
           adjustmentCents,
         );
         data.deliveryFeeCents = quoted.deliveryFeeCents;
+        data.taxCents = quoted.taxCents;
         data.totalCents = quoted.totalCents;
       }
 
@@ -387,6 +389,7 @@ export async function PATCH(request: Request, { params }: Params) {
           squareWallet: order.squareWallet,
           subtotalCents: order.subtotalCents,
           deliveryFeeCents: order.deliveryFeeCents,
+          taxCents: order.taxCents,
           adjustmentCents: order.adjustmentCents,
           adjustmentLabel: order.adjustmentLabel,
           totalCents: order.totalCents,

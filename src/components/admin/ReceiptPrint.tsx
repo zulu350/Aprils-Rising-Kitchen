@@ -24,6 +24,7 @@ export type ReceiptOrder = {
   squareWallet?: string | null;
   subtotalCents: number;
   deliveryFeeCents: number;
+  taxCents: number;
   adjustmentCents: number;
   adjustmentLabel: string | null;
   totalCents: number;
@@ -201,7 +202,9 @@ export function ReceiptPrint({
           ) : null}
           <div className="flex justify-between text-stone-600">
             <span>Tax</span>
-            <span>None</span>
+            <span className="tabular-nums">
+              {order.taxCents > 0 ? formatMoney(order.taxCents) : "None"}
+            </span>
           </div>
           <div className="flex justify-between border-t border-stone-300 pt-2 text-base font-semibold">
             <span>Total</span>

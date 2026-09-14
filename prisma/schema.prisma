@@ -31,7 +31,9 @@ model Order {
   squareWallet        String?
   subtotalCents       Int
   deliveryFeeCents    Int         @default(0)
-  /** Admin adjustment (cents); can be negative. totalCents = subtotal + delivery + adjustment */
+  /** Idaho 6% on product (subtotal + adjustment). Delivery is not taxed. */
+  taxCents            Int         @default(0)
+  /** Admin adjustment (cents); can be negative. totalCents = subtotal + tax + delivery + adjustment */
   adjustmentCents     Int         @default(0)
   adjustmentLabel     String?
   /** Kitchen note shown to the customer about custom changes */

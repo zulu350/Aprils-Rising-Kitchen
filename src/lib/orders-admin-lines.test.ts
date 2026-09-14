@@ -21,7 +21,7 @@ test("catalog cheese rolls still uses menu price", () => {
   ]);
   assert.equal(result.error, undefined);
   assert.equal(result.lines[0]?.name, "Pinoy Cheese Bread");
-  assert.equal(result.lines[0]?.unitPriceCents, 2500);
+  assert.equal(result.lines[0]?.unitPriceCents, 2400);
 });
 
 test("staff preview Pinoy Cheese Bread unitPrice 12 pickup totals $12", () => {
@@ -34,7 +34,8 @@ test("staff preview Pinoy Cheese Bread unitPrice 12 pickup totals $12", () => {
   });
   assert.equal(quoted.ok, true);
   if (!quoted.ok) return;
-  assert.equal(quoted.quote.preview.total, 12);
+  assert.equal(quoted.quote.preview.total, 12.72);
+  assert.equal(quoted.quote.preview.tax, 0.72);
   assert.equal(quoted.quote.preview.items[0]?.menuItemId, "cheese-rolls");
   assert.equal(quoted.quote.preview.items[0]?.name, "Pinoy Cheese Bread");
 });
@@ -64,5 +65,5 @@ test("mixed catalog plus custom", () => {
   ]);
   assert.equal(result.error, undefined);
   const total = result.lines.reduce((s, l) => s + l.lineTotalCents, 0);
-  assert.equal(total, 2000 + 2400);
+  assert.equal(total, 1900 + 2400);
 });

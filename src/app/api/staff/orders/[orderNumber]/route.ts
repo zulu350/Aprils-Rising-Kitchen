@@ -172,6 +172,7 @@ export async function PATCH(request: Request, { params }: Params) {
       data.deliveryCity = fulfillment.value.deliveryCity;
       data.deliveryAddress = fulfillment.value.deliveryAddress;
       data.deliveryFeeCents = fulfillment.value.deliveryFeeCents;
+      data.taxCents = fulfillment.value.taxCents;
       data.totalCents = fulfillment.value.totalCents;
     }
 
@@ -207,6 +208,7 @@ export async function PATCH(request: Request, { params }: Params) {
       );
       data.subtotalCents = subtotalCents;
       data.deliveryFeeCents = quoted.deliveryFeeCents;
+      data.taxCents = quoted.taxCents;
       data.totalCents = quoted.totalCents;
     }
 
