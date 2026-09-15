@@ -105,7 +105,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-linen/80 py-4 text-center text-xs text-muted">
-        © {new Date().getFullYear()} {BUSINESS.name}. Cottage bakery · Idaho.
+        © {new Date().getFullYear()} {BUSINESS.name}, LLC. Cottage bakery · Idaho.
         All rights reserved.
       </div>
     </footer>
