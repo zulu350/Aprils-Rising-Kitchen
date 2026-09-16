@@ -25,6 +25,9 @@ type OrderRow = {
   paymentMethod: string;
   totalCents: number;
   createdAt: string;
+  deliveryMiles?: number | null;
+  milesFrom?: string | null;
+  returnMiles?: number | null;
   items: Array<{ name: string; quantity: number; menuItemId?: string }>;
 };
 
@@ -111,6 +114,26 @@ function sortOrders(orders: OrderRow[], sort: SortKey): OrderRow[] {
     default:
       return list;
   }
+}
+
+function formatBoardMiles(n: number): string {
+  return `${Math.round(n * 10) / 10} mi`;
+}
+
+function deliveryMilesLine(order: OrderRow): string | null {
+  if (order.fulfillment !== "delivery") return null;
+  const out = order.deliveryMiles;
+  const back = order.returnMiles;
+  if (out == null && back == null) return null;
+  const parts: string[] = [];
+  if (out != null) {
+    const from = order.milesFrom?.trim();
+    parts.push(from ? `${formatBoardMiles(out)} from ${from}` : formatBoardMiles(out));
+  }
+  if (back != null) {
+    parts.push(`${formatBoardMiles(back)} back`);
+  }
+  return parts.join(" · ");
 }
 
 function formatPlaced(iso: string): string {
@@ -273,7 +296,9 @@ export function OrderBoard() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {sorted.map((order) => (
+          {sorted.map((order) => {
+            const milesLine = deliveryMilesLine(order);
+            return (
             <li key={order.id}>
               <Link
                 href={`/admin/orders/${order.id}`}
@@ -314,6 +339,9 @@ export function OrderBoard() {
                     <p className="mt-1 text-sm text-brown">
                       {order.customerName} · {order.phone}
                     </p>
+                    {milesLine ? (
+                      <p className="mt-1 text-xs text-muted">{milesLine}</p>
+                    ) : null}
                     <p className="mt-1 text-xs text-muted">
                       {order.createdAt
                         ? `Placed ${formatPlaced(order.createdAt)} · `
@@ -329,7 +357,8 @@ export function OrderBoard() {
                 </div>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
