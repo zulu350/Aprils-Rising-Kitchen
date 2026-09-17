@@ -93,7 +93,7 @@ export function ReceiptPrint({
       </div>
 
       <article className="receipt mx-auto mb-10 max-w-xl bg-white px-8 py-8 text-black shadow-sm ring-1 ring-linen print:mb-0 print:max-w-none print:px-0 print:py-0 print:shadow-none print:ring-0">
-        <header className="border-b border-stone-300 pb-3 text-center">
+        <header className="border-b border-stone-300 pb-3 text-center print:pb-2">
           <p className="font-display text-3xl text-espresso">{BUSINESS.name}</p>
           <p className="mt-1 text-sm text-stone-600">{BUSINESS.tagline}</p>
           <p className="mt-1 text-sm text-stone-600">
@@ -101,7 +101,7 @@ export function ReceiptPrint({
           </p>
         </header>
 
-        <div className="mt-4 flex items-start justify-between gap-4">
+        <div className="mt-4 flex items-start justify-between gap-4 print:mt-3">
           <div>
             <p className="text-xs font-semibold tracking-wide text-stone-500 uppercase">
               Receipt {order.orderNumber}
@@ -113,7 +113,7 @@ export function ReceiptPrint({
           </div>
         </div>
 
-        <section className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+        <section className="mt-5 grid gap-3 text-sm sm:grid-cols-2 print:mt-3">
           <div>
             <p className="text-xs font-semibold tracking-wide text-stone-500 uppercase">
               Customer
@@ -145,31 +145,31 @@ export function ReceiptPrint({
           </div>
         </section>
 
-        <table className="mt-5 w-full border-collapse text-sm">
+        <table className="mt-5 w-full border-collapse text-sm print:mt-3">
           <thead>
             <tr className="border-b border-stone-300 text-left text-xs tracking-wide text-stone-500 uppercase">
-              <th className="py-2 pr-2 font-semibold">Item</th>
-              <th className="py-2 pr-2 text-right font-semibold">Qty</th>
-              <th className="py-2 pr-2 text-right font-semibold">Each</th>
-              <th className="py-2 text-right font-semibold">Amount</th>
+              <th className="py-2 pr-2 font-semibold print:py-1">Item</th>
+              <th className="py-2 pr-2 text-right font-semibold print:py-1">Qty</th>
+              <th className="py-2 pr-2 text-right font-semibold print:py-1">Each</th>
+              <th className="py-2 text-right font-semibold print:py-1">Amount</th>
             </tr>
           </thead>
           <tbody>
             {order.items.map((item, i) => (
               <tr key={`${item.name}-${i}`} className="border-b border-stone-200">
-                <td className="py-2 pr-2">
+                <td className="py-2 pr-2 print:py-1">
                   {item.name}
                   <span className="block text-xs text-stone-500">
                     {item.unitLabel}
                   </span>
                 </td>
-                <td className="py-2 pr-2 text-right tabular-nums">
+                <td className="py-2 pr-2 text-right tabular-nums print:py-1">
                   {item.quantity}
                 </td>
-                <td className="py-2 pr-2 text-right tabular-nums">
+                <td className="py-2 pr-2 text-right tabular-nums print:py-1">
                   {formatMoney(item.unitPriceCents)}
                 </td>
-                <td className="py-2 text-right tabular-nums">
+                <td className="py-2 text-right tabular-nums print:py-1">
                   {formatMoney(item.lineTotalCents)}
                 </td>
               </tr>
@@ -177,7 +177,7 @@ export function ReceiptPrint({
           </tbody>
         </table>
 
-        <div className="mt-4 ml-auto w-64 space-y-1 text-sm">
+        <div className="mt-4 ml-auto w-64 space-y-1 text-sm print:mt-3">
           <div className="flex justify-between">
             <span>Subtotal</span>
             <span className="tabular-nums">{formatMoney(order.subtotalCents)}</span>
@@ -224,30 +224,38 @@ export function ReceiptPrint({
         </div>
 
         {order.notes ? (
-          <p className="mt-6 text-sm text-stone-600">
+          <p className="mt-6 text-sm text-stone-600 print:mt-3">
             <span className="font-semibold text-stone-700">Notes: </span>
             {order.notes}
           </p>
         ) : null}
 
-        <footer className="receipt-footer mt-8 border-t border-stone-300 pt-4 text-sm text-stone-600 print:mt-6">
+        <footer className="receipt-footer mt-8 border-t border-stone-300 pt-4 text-sm text-stone-600 print:mt-4 print:pt-3">
           <p className="text-center">
             Thank you for supporting our cottage bakery.
           </p>
           <p className="mt-1 text-center">
             Questions? Call or text {BUSINESS.phone}.
           </p>
-          <div className="mt-5 flex items-center gap-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/google-review-qr.svg"
-              alt="QR code to leave a Google review"
-              width={96}
-              height={96}
-              className="receipt-qr size-24 shrink-0"
-            />
+          <p className="mt-4 text-xs font-semibold tracking-wide text-stone-500 uppercase print:mt-3">
+            Google review
+          </p>
+          <div className="mt-2 flex items-center gap-4">
+            <div className="shrink-0 text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/google-review-qr.svg"
+                alt="QR code to leave a Google review"
+                width={96}
+                height={96}
+                className="receipt-qr size-24 shrink-0 print:size-20"
+              />
+              <p className="mt-1 text-xs font-semibold tracking-wide text-stone-500 uppercase">
+                Scan
+              </p>
+            </div>
             <p className="leading-relaxed">
-              Enjoyed your bake? Scan for a Google review, or search{" "}
+              Scan this code for a Google review, or search{" "}
               <span className="font-medium text-stone-800">
                 April&apos;s Rising Kitchen
               </span>{" "}
@@ -261,7 +269,7 @@ export function ReceiptPrint({
         @media print {
           @page {
             size: letter;
-            margin: 0.55in;
+            margin: 0.45in;
           }
           html,
           body {
