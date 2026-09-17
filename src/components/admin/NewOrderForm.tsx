@@ -12,6 +12,7 @@ import {
 import { formatMoney } from "@/lib/admin-orders";
 import { nowInBoise, toISODate } from "@/lib/availability";
 import { quoteOrderTotals } from "@/lib/delivery";
+import { TAX_LINE_LABEL } from "@/lib/tax";
 
 type Line =
   | { key: string; kind: "menu"; item: MenuItem; quantity: number }
@@ -445,7 +446,7 @@ export function NewOrderForm() {
             </p>
           ) : null}
           <p className="text-sm text-muted tabular-nums">
-            Tax {formatMoney(taxCents)}
+            {TAX_LINE_LABEL} {formatMoney(taxCents)}
           </p>
           <p className="text-lg font-semibold tabular-nums text-espresso">
             Total {formatMoney(totalCents)}

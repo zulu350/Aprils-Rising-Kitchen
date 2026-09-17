@@ -14,6 +14,7 @@ import {
 } from "@/lib/admin-orders";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
+import { TAX_LINE_LABEL } from "@/lib/tax";
 import { paidThankYouLabel } from "@/lib/payment";
 
 
@@ -318,7 +319,7 @@ export function OrderConfirmation({
 
         {(order.taxCents ?? 0) > 0 ? (
           <div className="flex justify-between text-sm text-brown">
-            <span>Tax</span>
+            <span>{TAX_LINE_LABEL}</span>
             <span className="tabular-nums">
               {formatPrice(order.taxCents ?? 0)}
             </span>

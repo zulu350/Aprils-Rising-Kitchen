@@ -20,6 +20,7 @@ import {
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
 import { quoteOrderTotals } from "@/lib/delivery";
+import { TAX_LINE_LABEL } from "@/lib/tax";
 import { PAYMENT_METHOD_LABELS, squareMethodLabel } from "@/lib/payment";
 import {
   MileagePanel,
@@ -661,7 +662,7 @@ export function OrderDetail({ id }: { id: string }) {
             ) : null}
             {(order.taxCents ?? 0) > 0 ? (
               <div className="flex justify-between border-t border-linen pt-3 text-sm">
-                <span>Tax</span>
+                <span>{TAX_LINE_LABEL}</span>
                 <span className="tabular-nums">
                   {formatMoney(order.taxCents ?? 0)}
                 </span>
@@ -1016,7 +1017,7 @@ export function OrderDetail({ id }: { id: string }) {
                 </div>
               ) : null}
               <div className="mt-1 flex justify-between text-muted">
-                <span>Tax</span>
+                <span>{TAX_LINE_LABEL}</span>
                 <span className="tabular-nums">{formatMoney(previewTax)}</span>
               </div>
               <div className="mt-2 flex justify-between font-semibold text-espresso">

@@ -11,6 +11,7 @@ import { PaymentQrPanel } from "@/components/PaymentQrPanel";
 import { useCart } from "@/lib/cart";
 import { BUSINESS } from "@/lib/constants";
 import { quoteOrderTotals } from "@/lib/delivery";
+import { TAX_LINE_LABEL } from "@/lib/tax";
 import { MESSAGING, type DateSlot } from "@/lib/availability";
 import type { PaymentMethodPreference } from "@/lib/payment";
 
@@ -464,7 +465,7 @@ export function CheckoutClient() {
           <div
             className={`flex justify-between text-sm text-brown ${fulfillment === "delivery" ? "mt-2" : ""}`}
           >
-            <span>Tax</span>
+            <span>{TAX_LINE_LABEL}</span>
             <span className="tabular-nums">{formatPrice(taxCents)}</span>
           </div>
           <div className="mt-2 flex justify-between font-semibold text-espresso">

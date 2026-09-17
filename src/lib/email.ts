@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { formatPrice } from "@/data/menu";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
+import { TAX_LINE_LABEL } from "@/lib/tax";
 import { PAYMENT_METHOD_LABELS, paidThankYouLabel } from "@/lib/payment";
 
 export type OrderEmailPayload = {
@@ -139,7 +140,7 @@ function itemsListText(order: OrderEmailPayload): string {
   }
   const tax = order.taxCents ?? 0;
   if (tax > 0) {
-    lines.push(`  • Tax — ${formatPrice(tax)}`);
+    lines.push(`  • ${TAX_LINE_LABEL} — ${formatPrice(tax)}`);
   }
   return lines.join("\n");
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { formatMoney } from "@/lib/admin-orders";
 import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
+import { TAX_LINE_LABEL } from "@/lib/tax";
 import { squareMethodLabel } from "@/lib/payment";
 
 export type ReceiptOrder = {
@@ -201,7 +202,7 @@ export function ReceiptPrint({
             </div>
           ) : null}
           <div className="flex justify-between text-stone-600">
-            <span>Tax</span>
+            <span>{TAX_LINE_LABEL}</span>
             <span className="tabular-nums">
               {order.taxCents > 0 ? formatMoney(order.taxCents) : "None"}
             </span>
