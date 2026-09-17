@@ -56,11 +56,14 @@ export function SquarePayPanel({
   accessToken,
   amountCents,
   onPaid,
+  showSwitchHint = true,
 }: {
   orderNumber: string;
   accessToken: string;
   amountCents: number;
   onPaid: () => void;
+  /** False when Venmo/Zelle already sit on this page (decide later). */
+  showSwitchHint?: boolean;
 }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
@@ -299,10 +302,12 @@ export function SquarePayPanel({
           {error}
         </p>
       ) : null}
-      <p className="mt-3 text-xs text-muted">
-        Prefer Venmo, Zelle, or cash instead? Call or text us and we&apos;ll
-        help switch.
-      </p>
+      {showSwitchHint ? (
+        <p className="mt-3 text-xs text-muted">
+          Prefer Venmo, Zelle, or cash instead? Call or text us and we&apos;ll
+          help switch.
+        </p>
+      ) : null}
     </div>
   );
 }

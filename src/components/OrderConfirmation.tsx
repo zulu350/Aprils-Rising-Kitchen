@@ -358,6 +358,7 @@ export function OrderConfirmation({
               orderNumber={order.orderNumber}
               accessToken={accessToken}
               amountCents={order.totalCents}
+              showSwitchHint={order.paymentMethod !== "undecided"}
               onPaid={() => {
                 void loadOrder();
               }}
