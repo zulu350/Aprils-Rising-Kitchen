@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  CATEGORY_LABELS,
+  UNIT_LABELS,
+  formatPrice,
+  menuItems,
+} from "@/data/menu";
+import {
   ORDER_STATUSES,
   STATUS_COLORS,
   STATUS_LABELS,
@@ -83,6 +89,8 @@ function centsToDollarsInput(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
+const availableItems = menuItems.filter((item) => item.available);
+
 export function OrderDetail({ id }: { id: string }) {
   const router = useRouter();
   const [order, setOrder] = useState<OrderDetailData | null>(null);
@@ -94,6 +102,7 @@ export function OrderDetail({ id }: { id: string }) {
   const [editing, setEditing] = useState(false);
 
   const [lines, setLines] = useState<LineDraft[]>([]);
+  const [addItemId, setAddItemId] = useState(availableItems[0]?.id ?? "");
   const [notes, setNotes] = useState("");
   const [adminNote, setAdminNote] = useState("");
   const [email, setEmail] = useState("");
@@ -668,10 +677,66 @@ export function OrderDetail({ id }: { id: string }) {
         ) : (
           <div className="mt-4 space-y-4">
             <p className="text-sm text-muted">
-              Change quantities, prices, or add a custom line (e.g. half dozen).
-              Use the adjustment for a simple +/− on the total. Menu stays whole
-              units for the public.
+              Add from the menu, or a custom line (e.g. half dozen). Change
+              quantities and prices on any line. Use the adjustment for a
+              simple +/− on the total.
             </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <select
+                value={addItemId}
+                onChange={(e) => setAddItemId(e.target.value)}
+                className="min-w-0 flex-1 rounded-xl border border-linen bg-white px-3 py-2.5 text-sm"
+              >
+                {(["sourdough", "rolls"] as const).map((cat) => (
+                  <optgroup key={cat} label={CATEGORY_LABELS[cat]}>
+                    {availableItems
+                      .filter((item) => item.category === cat)
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} — {formatPrice(item.priceCents)} /{" "}
+                          {UNIT_LABELS[item.unitLabel]}
+                        </option>
+                      ))}
+                  </optgroup>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => {
+                  const item = availableItems.find((i) => i.id === addItemId);
+                  if (!item) return;
+                  setLines((prev) => {
+                    const existing = prev.find(
+                      (l) => l.menuItemId === item.id,
+                    );
+                    if (existing) {
+                      return prev.map((l) =>
+                        l.menuItemId === item.id
+                          ? {
+                              ...l,
+                              quantity: Math.min(99, l.quantity + 1),
+                            }
+                          : l,
+                      );
+                    }
+                    return [
+                      ...prev,
+                      {
+                        key: newKey(),
+                        menuItemId: item.id,
+                        name: item.name,
+                        unitLabel: item.unitLabel,
+                        unitPriceCents: item.priceCents,
+                        quantity: 1,
+                      },
+                    ];
+                  });
+                }}
+                className="rounded-full bg-espresso px-4 py-2.5 text-sm font-semibold text-white"
+              >
+                Add item
+              </button>
+            </div>
             {lines.map((line, index) => (
               <div
                 key={line.key}
