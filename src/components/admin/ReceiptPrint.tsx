@@ -75,7 +75,7 @@ export function ReceiptPrint({
   const paid = order.paymentStatus === "paid";
 
   return (
-    <div className="min-h-screen bg-wheat text-espresso print:bg-white">
+    <div className="min-h-screen bg-wheat text-espresso print:min-h-0 print:bg-white">
       <div className="mx-auto flex max-w-xl items-center justify-between gap-3 px-4 py-4 print:hidden">
         <Link
           href={`/admin/orders/${order.id}`}
@@ -177,7 +177,7 @@ export function ReceiptPrint({
           </tbody>
         </table>
 
-        <div className="mt-4 ml-auto w-56 space-y-1 text-sm">
+        <div className="mt-4 ml-auto w-64 space-y-1 text-sm">
           <div className="flex justify-between">
             <span>Subtotal</span>
             <span className="tabular-nums">{formatMoney(order.subtotalCents)}</span>
@@ -230,7 +230,7 @@ export function ReceiptPrint({
           </p>
         ) : null}
 
-        <footer className="receipt-footer mt-8 border-t border-stone-300 pt-4 text-sm text-stone-600">
+        <footer className="receipt-footer mt-8 border-t border-stone-300 pt-4 text-sm text-stone-600 print:mt-6">
           <p className="text-center">
             Thank you for supporting our cottage bakery.
           </p>
@@ -244,7 +244,7 @@ export function ReceiptPrint({
               alt="QR code to leave a Google review"
               width={96}
               height={96}
-              className="size-24 shrink-0"
+              className="receipt-qr size-24 shrink-0"
             />
             <p className="leading-relaxed">
               Enjoyed your bake? Scan for a Google review, or search{" "}
@@ -266,10 +266,24 @@ export function ReceiptPrint({
           html,
           body {
             background: white !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            display: block !important;
+          }
+          body > div {
+            display: block !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
           }
           .receipt-footer {
             break-inside: avoid;
             page-break-inside: avoid;
+          }
+          .receipt-qr {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
           table tr {
             break-inside: avoid;
