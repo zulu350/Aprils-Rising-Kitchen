@@ -104,8 +104,9 @@ export function PaymentQrPanel({
             Ready to pay?
           </p>
           <p className="mt-2 text-sm leading-relaxed text-brown">
-            You chose to decide later — that&apos;s fine. When you&apos;re ready,
-            scan <strong className="font-medium text-espresso">Venmo</strong> or{" "}
+            You chose to decide later — that&apos;s fine. Pay with card / Apple
+            Pay / Google Pay above, scan{" "}
+            <strong className="font-medium text-espresso">Venmo</strong> or{" "}
             <strong className="font-medium text-espresso">Zelle</strong> below,
             or pay cash at pickup/delivery. Include your order number in the
             payment note if you can.

@@ -56,7 +56,10 @@ export async function POST(request: Request) {
     );
   }
 
-  if (order.paymentMethod !== "square") {
+  if (
+    order.paymentMethod !== "square" &&
+    order.paymentMethod !== "undecided"
+  ) {
     return NextResponse.json(
       { error: "This order is not set up for card / Apple Pay." },
       { status: 400 },
@@ -110,6 +113,7 @@ export async function POST(request: Request) {
     where: { id: order.id },
     data: {
       paymentStatus: "paid",
+      paymentMethod: "square",
       squarePaymentId: result.payment.id ?? order.squarePaymentId,
       squareWallet: wallet,
     },

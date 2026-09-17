@@ -350,24 +350,25 @@ export function OrderConfirmation({
             {paidThankYouLabel(order.paymentMethod, order.squareWallet)}
           </p>
         </div>
-      ) : order.status === "cancelled" ? null : order.paymentMethod ===
-        "square" ? (
-        <div className="mt-6">
-          <SquarePayPanel
-            orderNumber={order.orderNumber}
-            accessToken={accessToken}
-            amountCents={order.totalCents}
-            onPaid={() => {
-              void loadOrder();
-            }}
-          />
-        </div>
-      ) : order.paymentMethod === "cash" ? null : (
-        <div className="mt-6">
-          <PaymentQrPanel
-            method={order.paymentMethod}
-            showBothWhenUndecided
-          />
+      ) : order.status === "cancelled" ? null : (
+        <div className="mt-6 space-y-4">
+          {order.paymentMethod === "square" ||
+          order.paymentMethod === "undecided" ? (
+            <SquarePayPanel
+              orderNumber={order.orderNumber}
+              accessToken={accessToken}
+              amountCents={order.totalCents}
+              onPaid={() => {
+                void loadOrder();
+              }}
+            />
+          ) : null}
+          {order.paymentMethod === "cash" ? null : (
+            <PaymentQrPanel
+              method={order.paymentMethod}
+              showBothWhenUndecided
+            />
+          )}
         </div>
       )}
 
