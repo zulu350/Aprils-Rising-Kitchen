@@ -24,8 +24,19 @@ export function formatDestination(
 ): string | null {
   const street = (address ?? "").trim();
   if (!street) return null;
+  // Street already has city, state, or ZIP — do not append Boise/Meridian again
+  // (Waze snaps to a nearby street when the query names two places).
+  if (streetHasPlace(street)) return street;
   const place = (city ?? "").trim();
   return place ? `${street}, ${place}, ID` : `${street}, ID`;
+}
+
+function streetHasPlace(street: string): boolean {
+  return (
+    /\b\d{5}(?:-\d{4})?\b/.test(street) ||
+    /,\s*(ID|Idaho)\b/i.test(street) ||
+    /\b(boise|meridian|eagle|nampa|kuna|star|garden city)\b/i.test(street)
+  );
 }
 
 function idahoExpand(query: string): string {

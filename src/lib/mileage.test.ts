@@ -21,7 +21,22 @@ test("destination joins street and city", () => {
     formatDestination("123 Main St", "Boise"),
     "123 Main St, Boise, ID",
   );
+  assert.equal(
+    formatDestination("123 Main St Apt 4", "Boise"),
+    "123 Main St Apt 4, Boise, ID",
+  );
   assert.equal(formatDestination("  ", "Boise"), null);
+});
+
+test("destination does not append city when street already has a place", () => {
+  assert.equal(
+    formatDestination("1579 E Falconrim Ct., Eagle ID 83616", "Boise"),
+    "1579 E Falconrim Ct., Eagle ID 83616",
+  );
+  assert.equal(
+    formatDestination("9 Oak St, Meridian, ID", "Boise"),
+    "9 Oak St, Meridian, ID",
+  );
 });
 
 test("maps URL is driving directions", () => {

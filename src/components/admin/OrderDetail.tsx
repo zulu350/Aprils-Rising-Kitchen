@@ -21,6 +21,7 @@ import { formatDateLabel } from "@/lib/availability";
 import { BUSINESS } from "@/lib/constants";
 import { quoteOrderTotals } from "@/lib/delivery";
 import { TAX_LINE_LABEL } from "@/lib/tax";
+import { PaymentQrPanel } from "@/components/PaymentQrPanel";
 import { PAYMENT_METHOD_LABELS, squareMethodLabel } from "@/lib/payment";
 import {
   MileagePanel,
@@ -422,6 +423,20 @@ export function OrderDetail({ id }: { id: string }) {
           </button>
           <button
             type="button"
+            disabled={
+              saving ||
+              (order.paymentStatus === "paid" &&
+                order.paymentMethod === "square")
+            }
+            onClick={() =>
+              void patch({ paymentStatus: "paid", paymentMethod: "square" })
+            }
+            className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-espresso ring-1 ring-linen disabled:opacity-50"
+          >
+            Paid · Square
+          </button>
+          <button
+            type="button"
             disabled={saving || order.paymentStatus === "unpaid"}
             onClick={() => void patch({ paymentStatus: "unpaid" })}
             className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-brown ring-1 ring-linen disabled:opacity-50"
@@ -457,6 +472,16 @@ export function OrderDetail({ id }: { id: string }) {
                 </button>
               ),
             )}
+          </div>
+        </details>
+        <details className="mt-3">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-espresso [&::-webkit-details-marker]:hidden">
+            <span>Venmo &amp; Zelle</span>
+            <span className="font-medium text-muted">Tap to show QR</span>
+          </summary>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <PaymentQrPanel method="venmo" compact />
+            <PaymentQrPanel method="zelle" compact />
           </div>
         </details>
       </section>

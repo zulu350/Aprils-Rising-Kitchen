@@ -1,16 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-function destinationLine(
-  address: string | null | undefined,
-  city: string | null | undefined,
-): string | null {
-  const street = (address ?? "").trim();
-  if (!street) return null;
-  const place = (city ?? "").trim();
-  return place ? `${street}, ${place}, ID` : `${street}, ID`;
-}
+import { formatDestination } from "@/lib/mileage";
 
 function mapsDir(origin: string, destination: string): string {
   const params = new URLSearchParams({
@@ -123,10 +114,10 @@ export function MileagePanel({
   const [panelError, setPanelError] = useState("");
   const [panelInfo, setPanelInfo] = useState("");
 
-  const dest = destinationLine(deliveryAddress, deliveryCity);
+  const dest = formatDestination(deliveryAddress, deliveryCity);
   const origin =
     from === "last" && lastStop
-      ? destinationLine(lastStop.deliveryAddress, lastStop.deliveryCity)
+      ? formatDestination(lastStop.deliveryAddress, lastStop.deliveryCity)
       : homeAddress;
   const mapsHref =
     dest && origin
